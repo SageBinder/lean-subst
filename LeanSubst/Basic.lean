@@ -1,4 +1,7 @@
 
+import Lilac
+open Lilac
+
 namespace LeanSubst
 
 universe u1 u2 u3
@@ -7,8 +10,8 @@ variable {S : Type u1} {T : Type u2} {U : Type u3}
 structure Ren (T : Type u2) where
   act : Nat -> Nat
 
-class RenMap (S : Type u1) (T : Type u2) where
-  rmap : Ren T -> S -> S
+class RenMap {n} (S : Type u1) (V : Vec (Type u2) n) where
+  rmap : V.map Ren -> S -> S
 
 export RenMap (rmap)
 
@@ -37,8 +40,8 @@ def Subst.act [SubstAction S T U] (σ : Subst S) : T -> U := SubstAction.act σ
 instance : SubstAction T Nat (Action T) where
   act := Subst.inner
 
-class SubstMap (S : Type u1) (T : Type u2) where
-  smap : Subst T -> S -> S
+class SubstMap {n} (S : Type u1) (V : Vec (Type u2) n) where
+  smap : V.map Subst -> S -> S
 
 export SubstMap (smap)
 

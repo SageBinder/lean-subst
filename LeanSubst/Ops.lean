@@ -8,76 +8,72 @@ universe u1 u2 u3
 variable {S : Type u1} {T : Type u2} {U : Type u3}
 variable {n : Nat} {V : Vec (Type u2) n}
 
-def Tuple.head : {n : Nat} -> {V : Vec (Type u2) n} -> Tuple (T::V) -> T
-| 0, #(), t => t
-| _n + 1, .cons _x _xs, (t, _) => t
-
 ----------------------------------------------------------------------------------------------------
 ---- Action
 ----------------------------------------------------------------------------------------------------
 @[simp]
-def Action.rmap [RenMap T (T::V)] (r : (T::V).map Ren) : Action T -> Action T
-| re x => re $ (Tuple.head r).act x
+def Action.rmap [RenMap S T] (r : Ren T) : Action S -> Action S
+| re x => re $ r.act x
 | su t => su t⟨r⟩
 
-instance (priority := high) [RenMap T (T::V)] : RenMap (Action T) (T::V) where
+instance (priority := high) [RenMap T T] : RenMap (Action T) T where
   rmap := Action.rmap
 
 @[simp]
-theorem Action.rmap_re [RenMap T (T::V)] {r : (T::V).map Ren} {x : Nat} : (@re T x)⟨r⟩ = re ((Tuple.head r).act x) := by
+theorem Action.rmap_re [RenMap T T] {r : Ren T} {x : Nat} : (@re T x)⟨r⟩ = re (r.act x) := by
   simp [RenMap.rmap]
 
 @[simp]
-theorem Action.rmap_su [RenMap T (T::V)] {r : (T::V).map Ren} {t : T} : (su t)⟨r⟩ = su t⟨r⟩ := by
+theorem Action.rmap_su [RenMap T T] {r : Ren T} {t : T} : (su t)⟨r⟩ = su t⟨r⟩ := by
   simp [RenMap.rmap]
 
--- @[simp]
--- def Action.hrmap [RenMap S T] (r : Ren T) : Action S -> Action S
--- | re x => re x
--- | su t => su t⟨r⟩
+@[simp]
+def Action.hrmap [RenMap S T] (r : Ren T) : Action S -> Action S
+| re x => re x
+| su t => su t⟨r⟩
 
--- instance [RenMap S T] : RenMap (Action S) T where
---   rmap := Action.hrmap
-
--- @[simp]
--- theorem Action.hrmap_re [RenMap S T] {r : Ren T} {x : Nat} : (@re S x)⟨r⟩ = re x := by
---   simp [RenMap.rmap]
-
--- @[simp]
--- theorem Action.hrmap_su [RenMap S T] {r : Ren T} {t : S} : (su t)⟨r⟩ = su t⟨r⟩ := by
---   simp [RenMap.rmap]
+instance [RenMap S T] : RenMap (Action S) T where
+  rmap := Action.hrmap
 
 @[simp]
-def Action.smap [SubstMap T (T::V)] (σ : (T::V).map Subst) : Action T -> Action T
-| re x => (Tuple.head σ).act x
+theorem Action.hrmap_re [RenMap S T] {r : Ren T} {x : Nat} : (@re S x)⟨r⟩ = re x := by
+  simp [RenMap.rmap]
+
+@[simp]
+theorem Action.hrmap_su [RenMap S T] {r : Ren T} {t : S} : (su t)⟨r⟩ = su t⟨r⟩ := by
+  simp [RenMap.rmap]
+
+@[simp]
+def Action.smap [SubstMap T T] (σ : Subst T) : Action T -> Action T
+| re x => σ.act x
 | su t => su t[σ]
 
-instance (priority := high) [SubstMap T (T::V)] : SubstMap (Action T) (T::V) where
+instance (priority := high) [SubstMap T T] : SubstMap (Action T) T where
   smap := Action.smap
 
 @[simp]
-theorem Action.smap_re [SubstMap T (T::V)] {σ : (T::V).map Subst} {x : Nat} : (@re T x)[σ] = (Tuple.head σ).act x := by
+theorem Action.smap_re [SubstMap T T] {σ : Subst T} {x : Nat} : (@re T x)[σ] = σ.act x := by
   simp [SubstMap.smap]
 
 @[simp]
-theorem Action.smap_su [SubstMap T (T::V)] {σ : (T::V).map Subst} {t : T} : (su t)[σ] = su t[σ] := by
+theorem Action.smap_su [SubstMap T T] {σ : Subst T} {t : T} : (su t)[σ] = su t[σ] := by
   simp [SubstMap.smap]
 
--- @[simp]
--- def Action.hsmap [SubstMap S T] (σ : Subst T) : Action S -> Action S
--- | re x => re x
--- | su t => su t[σ]
+@[simp]
+def Action.hsmap [SubstMap S T] (σ : Subst T) : Action S -> Action S
+| re x => re x
+| su t => su t[σ]
 
--- instance [SubstMap S T] : SubstMap (Action S) T where
---   smap := Action.hsmap
+instance [SubstMap S T] : SubstMap (Action S) T where
+  smap := Action.hsmap
 
--- @[simp]
--- theorem Action.hsmap_re [SubstMap S T] {σ : Subst T} {x : Nat} : (@re S x)[σ] = re x := by
---   simp [SubstMap.smap]
+@[simp]
+theorem Action.hsmap_re [SubstMap S T] {σ : Subst T} {x : Nat} : (@re S x)[σ] = re x := by
+  simp [SubstMap.smap]
 
--- @[simp]
--- theorem Action.hsmap_su [SubstMap S T] {σ : Subst T} {t : S} : (su t)[σ] = su t[σ] := by
---   simp [SubstMap.smap]
+@[simp]
+theorem Action.hsmap_su [SubstMap S T] {σ : Subst T} {t : S} : (su t)[σ] = su t[σ] := by
+  simp [SubstMap.smap]
 
 @[simp]
 theorem Subst.act_inner {f : Nat -> Action T} {x} : Subst.act { inner := f } x = f x := by
@@ -338,7 +334,7 @@ theorem Ren.compose_add_succ_right {k} : add T (k + 1) = +r k ∘ +1r := by
 theorem Ren.compose_add_succ_left {k} : add T (k + 1) = +1r ∘ +r k := by
   simp [add, succ, compose]; grind
 
-def Subst.compose [SubstMap T #(T)] : Subst T -> Subst T -> Subst T
+def Subst.compose [SubstMap T T] : Subst T -> Subst T -> Subst T
 | σ, τ => .mk λ n => (σ.act n)[τ]
 infixr:85 (name := Subst.compose_notation) " ∘ " => Subst.compose
 
@@ -543,5 +539,28 @@ theorem Ren.range_lt_cons {s e} {h : s < e} : s..e = s::(s.succ..e) := by
       simp [range]
       rw [ite_cond_eq_true, ite_cond_eq_true, ih (h := h2)]
       all_goals grind
+----------------------------------------------------------------------------------------------------
+---- Test
+----------------------------------------------------------------------------------------------------
+
+def Ren.ids : {n : Nat} -> (V : Vec (Type u2) n) -> V.map Ren
+| 0, #() => .up .unit
+| n + 1, .cons x xs =>
+  match n, xs with
+  | 0, #() => Ren.id x
+  | _ + 1, .cons y xs => (Ren.id x, ids (y::xs))
+
+instance [RenVecMap T V] : RenMap T T where
+  rmap r := rvmap r (Ren.ids V)
+
+def Subst.ids : {n : Nat} -> (V : Vec (Type u2) n) -> V.map Subst
+| 0, #() => .up .unit
+| n + 1, .cons x xs =>
+  match n, xs with
+  | 0, #() => Subst.id x
+  | _ + 1, .cons y xs => (Subst.id x, ids (y::xs))
+
+instance [SubstVecMap T V] : SubstMap T T where
+  smap r := svmap r (Subst.ids V)
 
 end LeanSubst

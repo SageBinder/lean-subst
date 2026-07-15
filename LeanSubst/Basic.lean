@@ -10,8 +10,8 @@ variable {S : Type u1} {T : Type u2} {U : Type u3}
 structure Ren (T : Type u2) where
   act : Nat -> Nat
 
-class RenMap {n} (S : Type u1) (V : Vec (Type u2) n) where
-  rmap : V.map Ren -> S -> S
+class RenMap (S : Type u1) (T : Type u2) where
+  rmap : Ren T -> S -> S
 
 export RenMap (rmap)
 
@@ -21,6 +21,11 @@ macro:max t:term noWs "⟨" r:term "⟩" : term => `(rmap $r $t)
 def unexpand_rmap : Lean.PrettyPrinter.Unexpander
 | `($_ $r $t) => `($t⟨$r⟩)
 | _ => throw ()
+
+class RenVecMap {n : semiOutParam Nat} (S : Type u1) (V : semiOutParam (Vec (Type u2) n)) where
+  rvmap : Ren S -> V.map Ren -> S -> S
+
+export RenVecMap (rvmap)
 
 inductive Action (T : Type u2) where
 | re : Nat -> Action T
@@ -40,8 +45,8 @@ def Subst.act [SubstAction S T U] (σ : Subst S) : T -> U := SubstAction.act σ
 instance : SubstAction T Nat (Action T) where
   act := Subst.inner
 
-class SubstMap {n} (S : Type u1) (V : Vec (Type u2) n) where
-  smap : V.map Subst -> S -> S
+class SubstMap (S : Type u1) (T : Type u2) where
+  smap : Subst T -> S -> S
 
 export SubstMap (smap)
 
@@ -51,5 +56,10 @@ macro:max t:term noWs "[" σ:term "]" : term => `(smap $σ $t)
 def unexpand_smap : Lean.PrettyPrinter.Unexpander
 | `($_ $σ $t) => `($t[$σ])
 | _ => throw ()
+
+class SubstVecMap {n : semiOutParam Nat} (S : Type u1) (V : semiOutParam (Vec (Type u2) n)) where
+  svmap : Subst S -> V.map Subst -> S -> S
+
+export SubstVecMap (svmap)
 
 end LeanSubst

@@ -5,13 +5,14 @@ open Lilac
 namespace LeanSubst
 
 universe u1 u2 u3
-variable {S : Type u1} {T : Type u2} {U : Type u3}
+variable {S : Type} {T : Type} {U : Type}
 
-structure Ren (T : Type u2) where
+structure Ren (T : Type) : Type where
   act : Nat -> Nat
 
-class RenMap (S : Type u1) (T : Type u2) where
-  rmap : Ren T -> S -> S
+class RenMap {n : Nat} (S : Type) (V : Vec (Type) n) where
+  rmap : V -> S -> S
+  self : Option (V -> Ren S)
 
 export RenMap (rmap)
 
@@ -22,44 +23,60 @@ def unexpand_rmap : Lean.PrettyPrinter.Unexpander
 | `($_ $r $t) => `($t⟨$r⟩)
 | _ => throw ()
 
-class RenVecMap {n : semiOutParam Nat} (S : Type u1) (V : semiOutParam (Vec (Type u2) n)) where
-  rvmap : Ren S -> V.map Ren -> S -> S
+def test1 : Ren Nat -> Nat -> Nat := sorry
+def test2 : Ren Nat × Ren Bool -> Nat -> Nat := sorry
 
-export RenVecMap (rvmap)
+instance : RenMap Nat #(Ren Nat) where
+  rmap := test1
+  self := sorry
 
-inductive Action (T : Type u2) where
+instance : RenMap Nat #(Ren Nat, Ren Bool) where
+  rmap := test2
+  self := sorry
+
+theorem test3 (r1 : Ren Nat) (r2 : Ren Bool) (x : Nat) : x⟨r1::r2::#⟨⟩⟩ = x := sorry
+
+theorem test4 (r1 : Ren Nat) (x : Nat) : x⟨r1::#⟨⟩⟩ = x := sorry
+
+inductive Action (T : Type) where
 | re : Nat -> Action T
 | su : T -> Action T
 deriving Repr
 
 export Action (re su)
 
-structure Subst (T : Type u2) where
-  inner : Nat -> Action T
+instance {n} {S : Type} {V : Vec Type n} [i : RenMap S V] : RenMap (Action S) V where
+  self := none
+  rmap := λ r a =>
+    match a with
+    | re x =>
+      match i.self with
+      | some p => re ((p r).act x)
+      | none => re x
+    | su t => su t⟨r⟩
 
-class SubstAction (T : Type u1) (A : Type u2) (U : outParam (Type u3)) where
-  act (σ : Subst T) : A -> U
+-- structure Subst (T : Type u2) where
+--   inner : Nat -> Action T
 
-def Subst.act [SubstAction S T U] (σ : Subst S) : T -> U := SubstAction.act σ
+-- class SubstAction (T : Type u1) (A : Type u2) (U : outParam (Type u3)) where
+--   act (σ : Subst T) : A -> U
 
-instance : SubstAction T Nat (Action T) where
-  act := Subst.inner
+-- def Subst.act [SubstAction S T U] (σ : Subst S) : T -> U := SubstAction.act σ
 
-class SubstMap (S : Type u1) (T : Type u2) where
-  smap : Subst T -> S -> S
+-- instance : SubstAction T Nat (Action T) where
+--   act := Subst.inner
 
-export SubstMap (smap)
+-- class SubstMap {n} (S : Type u1) (V : Vec (Type u2) n) where
+--   smap : V.map Subst -> S -> S
 
-macro:max t:term noWs "[" σ:term "]" : term => `(smap $σ $t)
+-- export SubstMap (smap)
 
-@[app_unexpander smap]
-def unexpand_smap : Lean.PrettyPrinter.Unexpander
-| `($_ $σ $t) => `($t[$σ])
-| _ => throw ()
+-- macro:max t:term noWs "[" σ:term "]" : term => `(smap $σ $t)
 
-class SubstVecMap {n : semiOutParam Nat} (S : Type u1) (V : semiOutParam (Vec (Type u2) n)) where
-  svmap : Subst S -> V.map Subst -> S -> S
+-- @[app_unexpander smap]
+-- def unexpand_smap : Lean.PrettyPrinter.Unexpander
+-- | `($_ $σ $t) => `($t[$σ])
+-- | _ => throw ()
 
-export SubstVecMap (svmap)
 
 end LeanSubst

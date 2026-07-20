@@ -4,22 +4,41 @@ open Lilac
 
 namespace LeanSubst
 
+universe u
+
 universe u1 u2 u3
 variable {S : Type u1} {T : Type u2} {U : Type u3}
 
 set_option linter.unusedVariables false in
 abbrev Var (T : Type u2) := Nat
 
-structure Ren (T : Type u2) : Type u3 where
+structure Ren (T : Type u2) where
   act : Var T -> Var T
 
-class RenMap {n : Nat} (S : Type u1) (V : Vec (Type u2) n) where
-  rmap : V -> S -> S
-  self [NeZero n] : True ∨ V.head = Ren S
+@[simp]
+def List.RenMapType (S : Type u) : List (Type u) -> Type u
+| [] => S
+| .cons x xs => Ren x -> List.RenMapType S xs
+
+class RenMap (S : Type u) (V : List (Type u)) where
+  rmap : List.RenMapType (S -> S) V
 
 export RenMap (rmap)
 
-macro:max (name := «term_⟨_,⟩») t:term noWs "⟨" r:term "," "⟩" : term => `(rmap $r $t)
+def test1 : Ren Nat -> Nat -> Nat := sorry
+
+instance : RenMap Nat [Nat] where
+  rmap := test1
+
+def test2 : Ren Nat -> Ren Bool -> Nat -> Nat := sorry
+
+instance : RenMap Nat [Nat, Bool] where
+  rmap := test2
+
+theorem test3 {r1 : Ren Nat} {r2 : Ren Bool} {x : Nat} : @rmap _ [Nat, Bool] _ r1 r2 x = x := sorry
+
+
+macro:max (name := «term_⟨_,⟩») t:term noWs "⟨" r:term ",⟩" : term => `(rmap $r $t)
 syntax:max (name := «term_⟨_,+⟩») term noWs "⟨" term ,+ "⟩" : term
 
 open Lean in
@@ -60,12 +79,10 @@ instance : SubstAction T Nat (Action T) where
 
 class SubstMap {n} (S : Type u2) (V : Vec (Type u2) n) where
   smap : V -> S -> S
-  index : Fin n
-  index_eq : (V[index]) = (Subst S)
 
 export SubstMap (smap)
 
-macro:max (name := «term_[_,]») t:term noWs "[" σ:term "," "]" : term => `(smap $σ $t)
+macro:max (name := «term_[_,]») t:term noWs "[" σ:term ",]" : term => `(smap $σ $t)
 syntax:max (name := «term_[_,+]») term noWs "[" term ,+ "]" : term
 
 open Lean in

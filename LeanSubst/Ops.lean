@@ -339,6 +339,11 @@ def Ren.compose : Ren T -> Ren T -> Ren T
 | r1, r2 => .mk λ n => r2.act (r1.act n)
 infixr:85 " ∘ " => Ren.compose
 
+def Ren.compose_tuple : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Ren V -> List.Tuple Ren V
+| [], _, _ => .up .unit
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_tuple v1s v2s)
+infixr:85 " ∘ " => Ren.compose_tuple
+
 @[simp]
 theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 ∘ r2).act x = r2.act (r1.act x) := by
   simp [compose]
@@ -366,21 +371,24 @@ theorem Ren.compose_add_succ_right {k} : add T (k + 1) = +r k ∘ +1r := by
 theorem Ren.compose_add_succ_left {k} : add T (k + 1) = +1r ∘ +r k := by
   simp [add, succ, compose]; grind
 
-def Ren.compose_tuple : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Ren V -> List.Tuple Ren V
-| [], v1, v2 => sorry
-| .cons x xs, (v1, v1s), (v2, v2s) => sorry
-infixr:85 " ∘ " => Ren.compose_tuple
-
 def Subst.compose [SubstMap T [T]] : Subst T -> Subst T -> Subst T
 | σ, τ => .mk λ n => (σ.act n)[τ]
 infixr:85 (name := Subst.compose_notation) " ∘ " => Subst.compose
+
+def Subst.compose_tuple
+  : {V : List (Type u2)} -> [∀ (i : Fin V.length), SubstMap V[i] [V[i]]] ->
+    List.Tuple Subst V -> List.Tuple Subst V -> List.Tuple Subst V
+| [], _, _, _ => .up .unit
+| .cons V Vs, i, (v1, v1s), (v2, v2s) =>
+  let i0 : SubstMap V [V] := i 0
+  let i : (i : Fin Vs.length) → SubstMap Vs[i] [Vs[i]] := λ (k : Fin Vs.length) => i k.succ
+  (v1 ∘ v2, compose_tuple v1s v2s)
+infixr:85 " ∘ " => Subst.compose_tuple
 
 @[simp]
 theorem Subst.compose_action [SubstMap T [T]] {σ τ : Subst T} {x : Var T}
   : (σ ∘ τ).act x = (σ.act x)[τ]
 := by simp [compose, act, SubstAction.act]
-
-set_option linter.tacticCheckInstances true
 
 @[simp]
 theorem Subst.compose_pred_succ [SubstMap T [T]] : succ T ∘ pred T = id T := by
@@ -406,6 +414,12 @@ def Subst.compose_ren_left : Ren T -> Subst T -> Subst T
 | r, τ => .mk λ n => τ.act (r.act n)
 infixr:85 (name := Subst.compose_ren_left_notation) " ∘ " => Subst.compose_ren_left
 
+def Subst.compose_ren_left_tuple
+  : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Subst V -> List.Tuple Subst V
+| [],  _, _ => .up .unit
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_ren_left_tuple v1s v2s)
+infixr:85 " ∘ " => Subst.compose_ren_left_tuple
+
 @[simp]
 theorem Subst.compose_ren_left_action {r : Ren T} {τ : Subst T} {x}
   : (r ∘ τ).act x = τ.act (r.act x)
@@ -414,6 +428,16 @@ theorem Subst.compose_ren_left_action {r : Ren T} {τ : Subst T} {x}
 def Subst.compose_ren_right [RenMap T [T]] : Subst T -> Ren T -> Subst T
 | σ, r => .mk λ n => (σ.act n)⟨r⟩
 infixr:85 (name := Subst.compose_ren_right_notation) " ∘ " => Subst.compose_ren_right
+
+def Subst.compose_ren_right_tuple
+  : {V : List (Type u2)} -> [∀ (i : Fin V.length), RenMap V[i] [V[i]]] ->
+    List.Tuple Subst V -> List.Tuple Ren V -> List.Tuple Subst V
+| [], _, _, _ => .up .unit
+| .cons V Vs, i, (v1, v1s), (v2, v2s) =>
+  let i0 : RenMap V [V] := i 0
+  let i : (i : Fin Vs.length) → RenMap Vs[i] [Vs[i]] := λ (k : Fin Vs.length) => i k.succ
+  (v1 ∘ v2, compose_ren_right_tuple v1s v2s)
+infixr:85 " ∘ " => Subst.compose_ren_right_tuple
 
 @[simp]
 theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T} {x : Nat}
@@ -554,6 +578,10 @@ theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
   simp [to, compose, Subst.compose, Subst.act, SubstAction.act]
   funext; case _ x =>
   rw [Action.smap1_re]; simp
+
+def Ren.tuple_to : {V : List (Type u2)} -> (r : List.Tuple Ren V) -> List.Tuple Subst V
+| [], _ => .up .unit
+| .cons _ _, (r, rs) => (r.to, tuple_to rs)
 ----------------------------------------------------------------------------------------------------
 ---- Range
 ----------------------------------------------------------------------------------------------------

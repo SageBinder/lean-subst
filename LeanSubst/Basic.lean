@@ -1,8 +1,6 @@
 
 import Lean.Elab.Term
 import Lean.Elab.SyntheticMVars
-import Lilac
-open Lilac
 
 namespace LeanSubst
 
@@ -47,6 +45,9 @@ structure Ren (T : Type u2) where
 
 class RenMap (S : Type u1) (V : List (Type u2)) where
   rmap : List.Tuple Ren V -> S -> S
+
+class RenMapAll (V : List (Type u2)) where
+  rmap : ∀ (i : Fin V.length), RenMap V[i] [V[i]]
 
 export RenMap (rmap)
 
@@ -94,6 +95,9 @@ instance : SubstAction T Nat (Action T) where
 
 class SubstMap (S : Type u1) (V : List (Type u2)) where
   smap : List.Tuple Subst V -> S -> S
+
+class SubstMapAll (V : List (Type u2)) where
+  rmap : ∀ (i : Fin V.length), SubstMap V[i] [V[i]]
 
 export SubstMap (smap)
 

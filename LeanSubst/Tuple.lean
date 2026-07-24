@@ -1,19 +1,15 @@
 
-import Lilac
-open Lilac
-
 namespace LeanSubst
 
-universe u
+universe u1 u2 u3
+variable {S : Type u1} {T : Type u2} {U : Type u3}
 
-def Tuple.get : ∀ {n : Nat} {α : Vec (Type u) n}, Tuple α -> (i : Fin n) -> α[i]
-| 0, #(), t, i => Fin.elim0 i
-| n + 1, .cons x xs, t, i =>
-  match n, xs, t, i with
-  | 0, #(), t, 0 => t
-  | n + 1, .cons y xs, (t, ts), i => by
-    cases i using Fin.cases with
-    | zero => exact t
-    | succ i => exact get ts i
+@[implicit_reducible, simp]
+def List.Tuple (F : Type u1 -> Type u2) : List (Type u1) -> Type u2
+| [] => ULift Unit
+| .cons x xs => F x × List.Tuple F xs
+
+class List.TuplePred (P : Type u2 -> List (Type u2) -> Type u1) (V : List $ Type u2) where
+  pred : ∀ (i : Fin V.length), P V[i] [V[i]]
 
 end LeanSubst

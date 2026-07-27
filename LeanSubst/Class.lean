@@ -1,8 +1,6 @@
 import LeanSubst.Basic
 import LeanSubst.Ops
 
-open Lilac
-
 namespace LeanSubst
 
 universe u1 u2 u3
@@ -32,17 +30,13 @@ theorem Ren.apply_compose [RenMap S V] [RenMapCompose S V] {s : S} {r1 r2 : List
 @[simp↓, grind =]
 theorem Ren.apply_compose1 [RenMap S [T]] [RenMapCompose S [T]] {s : S} {r1 r2 : Ren T}
   : s⟨r1⟩⟨r2⟩ = s⟨r1 ∘ r2⟩
-:= by
-  have lem := @RenMapCompose.apply_compose S [T] _ _ s (r1, .up .unit) (r2, .up .unit)
-  rw [lem]; simp [Ren.compose_tuple]
+:= Ren.apply_compose
 
 @[simp↓, grind =]
 theorem Ren.apply_compose2 [RenMap S [T1, T2]] [RenMapCompose S [T1, T2]]
   {s : S} {r1 r2 : Ren T1} {k1 k2 : Ren T2}
   : s⟨r1, k1⟩⟨r2, k2⟩ = s⟨r1 ∘ r2, k1 ∘ k2⟩
-:= by
-  have lem := @RenMapCompose.apply_compose S [T1, T2] _ _ s (r1, k1, .up .unit) (r2, k2, .up .unit)
-  rw [lem]; simp [Ren.compose_tuple]
+:= Ren.apply_compose
 
 -- instance (priority := high) [RenMap T T] [RenMapId T T] : RenMapId (Action T) T where
 --   apply_id := by intro s; cases s <;> simp
@@ -56,7 +50,7 @@ theorem Ren.apply_compose2 [RenMap S [T1, T2]] [RenMapCompose S [T1, T2]]
 -- instance [RenMap S T] [RenMapCompose S T] : RenMapCompose (Action S) T where
 --   apply_compose := by intro s; cases s <;> simp
 
-class SubstMapStable (S : Type u1) (T : Type u2) [RenMap S V] [SubstMap S V] where
+class SubstMapStable (S : Type u1) (V : List $ Type u2) [RenMap S V] [SubstMap S V] where
   apply_stable (r : List.Tuple Ren V) (σ : List.Tuple Subst V) : Ren.tuple_to r = σ -> rmap (S := S) r = smap σ
 
 class SubstMapId (S : Type u1) (V : List $ Type u2) [SubstMap S V] where
@@ -74,31 +68,82 @@ theorem Subst.apply_id2 [SubstMap S [T1, T2]] [SubstMapId S [T1, T2]] {s : S} : 
 class SubstMapRenComposeLeft (S : Type u1) (V : List $ Type u2) [RenMap S V] [SubstMap S V] where
   apply_ren_compose_left {s : S} {r : List.Tuple Ren V} {τ : List.Tuple Subst V} : s⟨r,⟩[τ,] = s[r ∘ τ,]
 
-class SubstMapRenComposeRight (S : Type u1) (V : List $ Type u2) [RenMap S V] [∀ (i : Fin V.length), RenMap V[i] [V[i]]] [SubstMap S V] where
+@[simp, grind =]
+theorem Subst.apply_ren_compose_left
+  [RenMap S V] [SubstMap S V] [SubstMapRenComposeLeft S V]
+  {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V}
+  : s⟨r,⟩[σ,] = s[r ∘ σ,]
+:= SubstMapRenComposeLeft.apply_ren_compose_left
+
+@[simp, grind =]
+theorem Subst.apply_ren_compose_left1
+  [RenMap S [T]] [SubstMap S [T]] [SubstMapRenComposeLeft S [T]]
+  {s : S} {r : Ren T} {σ : Subst T}
+  : s⟨r⟩[σ] = s[r ∘ σ]
+:= Subst.apply_ren_compose_left
+
+@[simp, grind =]
+theorem Subst.apply_ren_compose_left2
+  [RenMap S [T1, T2]] [SubstMap S [T1, T2]] [SubstMapRenComposeLeft S [T1, T2]]
+  {s : S} {r1 : Ren T1} {r2 : Ren T2} {σ1 : Subst T1} {σ2 : Subst T2}
+  : s⟨r1, r2⟩[σ1, σ2] = s[r1 ∘ σ1, r2 ∘ σ2]
+:= Subst.apply_ren_compose_left
+
+class SubstMapRenComposeRight (S : Type u1) (V : List $ Type u2) [RenMap S V] [RenMapAll V] [SubstMap S V] where
   apply_ren_compose_right {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V} : s[σ,]⟨r,⟩ = s[σ ∘ r,]
 
-class SubstMapCompose (S : Type u1) (V : List $ Type u2) [SubstMap S V] [∀ (i : Fin V.length), SubstMap V[i] [V[i]]] where
+@[simp, grind =]
+theorem Subst.apply_ren_compose_right
+  [RenMap S V] [RenMapAll V] [SubstMap S V] [SubstMapRenComposeRight S V]
+  {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V}
+  : s[σ,]⟨r,⟩ = s[σ ∘ r,]
+:= SubstMapRenComposeRight.apply_ren_compose_right
+
+@[simp, grind =]
+theorem Subst.apply_ren_compose_right1
+  [RenMap S [T]] [RenMapAll [T]] [SubstMap S [T]] [SubstMapRenComposeRight S [T]]
+  {s : S} {r : Ren T} {σ : Subst T}
+  : s[σ]⟨r⟩ = s[σ ∘ r]
+:= Subst.apply_ren_compose_right
+
+@[simp, grind =]
+theorem Subst.apply_ren_compose_right2
+  [RenMap S [T1, T2]] [RenMapAll [T1, T2]] [SubstMap S [T1, T2]] [SubstMapRenComposeRight S [T1, T2]]
+  {s : S} {r1 : Ren T1} {r2 : Ren T2} {σ1 : Subst T1} {σ2 : Subst T2}
+  : s[σ1, σ2]⟨r1, r2⟩ = s[σ1 ∘ r1, σ2 ∘ r2]
+:= Subst.apply_ren_compose_right
+
+class SubstMapCompose (S : Type u1) (V : List $ Type u2) [SubstMap S V] [SubstMapAll V] where
   apply_compose {s : S} {σ τ : List.Tuple Subst V} : s[σ,][τ,] = s[σ ∘ τ,]
 
 @[simp, grind =]
-theorem Subst.apply_compose [SubstMap S V] [i : ∀ (i : Fin V.length), SubstMap V[i] [V[i]]] [@SubstMapCompose S V _ i] {s : S} {r1 r2 : List.Tuple Subst V}
-  : s[r1,][r2,] = s[@Subst.compose_tuple _ i r1 r2,]
+theorem Subst.apply_compose
+  [SubstMap S V] [SubstMapAll V] [SubstMapCompose S V]
+  {s : S} {σ1 σ2 : List.Tuple Subst V}
+  : s[σ1,][σ2,] = s[σ1 ∘ σ2,]
 := SubstMapCompose.apply_compose
 
 @[simp↓, grind =]
-theorem Subst.apply_compose1 [SubstMap S [T]] [i : SubstMap T [T]] [@SubstMapCompose S [T] _ (λ k => i)] {s : S} {r1 r2 : Subst T}
-  : s⟨r1⟩⟨r2⟩ = s⟨r1 ∘ r2⟩
-:= by
-  have lem := @SubstMapCompose.apply_compose S [T] _ _ s (r1, .up .unit) (r2, .up .unit)
-  rw [lem]; simp [Subst.compose_tuple]
+theorem Subst.apply_compose1
+  [SubstMap S [T]] [SubstMap T [T]] [SubstMapCompose S [T]]
+  {s : S} {σ1 σ2 : Subst T}
+  : s[σ1][σ2] = s[σ1 ∘ σ2]
+:= Subst.apply_compose
 
 @[simp↓, grind =]
-theorem Subst.apply_compose2 [SubstMap S [T1, T2]] [SubstMapCompose S [T1, T2]]
-  {s : S} {r1 r2 : Subst T1} {k1 k2 : Subst T2}
-  : s⟨r1, k1⟩⟨r2, k2⟩ = s⟨r1 ∘ r2, k1 ∘ k2⟩
-:= by
-  have lem := @SubstMapCompose.apply_compose S [T1, T2] _ _ s (r1, k1, .up .unit) (r2, k2, .up .unit)
-  rw [lem]; simp [Subst.compose_tuple]
+theorem Subst.apply_compose2
+  [SubstMap S [T1, T2]] [SubstMap T1 [T1]] [SubstMap T2 [T2]] [SubstMapCompose S [T1, T2]]
+  {s : S} {σ1 σ2 : Subst T1} {τ1 τ2 : Subst T2}
+  : s[σ1, τ1][σ2, τ2] = s[σ1 ∘ σ2, τ1 ∘ τ2]
+:= Subst.apply_compose
+
+-- @[simp↓, grind =]
+-- theorem Subst.apply_compose2 [SubstMap S [T1, T2]] [SubstMapCompose S [T1, T2]]
+--   {s : S} {r1 r2 : Subst T1} {k1 k2 : Subst T2}
+--   : s⟨r1, k1⟩⟨r2, k2⟩ = s⟨r1 ∘ r2, k1 ∘ k2⟩
+-- := by
+--   have lem := @SubstMapCompose.apply_compose S [T1, T2] _ _ s (r1, k1, .up .unit) (r2, k2, .up .unit)
+--   rw [lem]; simp [Subst.compose_tuple]
 
 -- class SubstMapRenCommute (S : Type u1) (T : Type u2) [RenMap S S] [RenMap S T] [SubstMap S T] where
 --   apply_commute_ren_subst {s : S} {r : Ren S} {τ : Subst T} : s⟨r⟩[τ] = s[τ]⟨r⟩

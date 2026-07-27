@@ -1,13 +1,54 @@
 
 import LeanSubst.Basic
-import LeanSubst.Tuple
-open Lilac
 
 namespace LeanSubst
 
 universe u1 u2 u3
-variable {S : Type u1} {T : Type u2} {U : Type u3}
+variable {S : Type u1} {T T1 T2 : Type u2} {U : Type u3}
 variable {V : List (Type u2)}
+
+----------------------------------------------------------------------------------------------------
+---- RenMapAll & SubstMapAll
+----------------------------------------------------------------------------------------------------
+set_option synthInstance.checkSynthOrder false in
+instance [i : RenMapAll (T::V)] : RenMap T [T] where
+  rmap := (i.rmap 0).rmap
+
+set_option synthInstance.checkSynthOrder false in
+instance [i : RenMapAll (T::V)] : RenMapAll V where
+  rmap := λ k => (i.rmap k.succ)
+
+instance [i : RenMap T [T]] : RenMapAll [T] where
+  rmap := λ 0 => i
+
+instance [i1 : RenMap T1 [T1]] [i2 : RenMap T2 [T2]] : RenMapAll [T1, T2] where
+  rmap := by
+    intro i; cases i using Fin.cases with
+    | zero => exact i1
+    | succ i =>
+      cases i using Fin.cases with
+      | zero => exact i2
+      | succ i => apply Fin.elim0 i
+
+set_option synthInstance.checkSynthOrder false in
+instance [i : SubstMapAll (T::V)] : SubstMap T [T] where
+  smap := (i.smap 0).smap
+
+set_option synthInstance.checkSynthOrder false in
+instance [i : SubstMapAll (T::V)] : SubstMapAll V where
+  smap := λ k => (i.smap k.succ)
+
+instance [i : SubstMap T [T]] : SubstMapAll [T] where
+  smap := λ 0 => i
+
+instance [i1 : SubstMap T1 [T1]] [i2 : SubstMap T2 [T2]] : SubstMapAll [T1, T2] where
+  smap := by
+    intro i; cases i using Fin.cases with
+    | zero => exact i1
+    | succ i =>
+      cases i using Fin.cases with
+      | zero => exact i2
+      | succ i => apply Fin.elim0 i
 
 ----------------------------------------------------------------------------------------------------
 ---- Var
@@ -376,13 +417,10 @@ def Subst.compose [SubstMap T [T]] : Subst T -> Subst T -> Subst T
 infixr:85 (name := Subst.compose_notation) " ∘ " => Subst.compose
 
 def Subst.compose_tuple
-  : {V : List (Type u2)} -> [∀ (i : Fin V.length), SubstMap V[i] [V[i]]] ->
+  : {V : List (Type u2)} -> [SubstMapAll V] ->
     List.Tuple Subst V -> List.Tuple Subst V -> List.Tuple Subst V
 | [], _, _, _ => .up .unit
-| .cons V Vs, i, (v1, v1s), (v2, v2s) =>
-  let i0 : SubstMap V [V] := i 0
-  let i : (i : Fin Vs.length) → SubstMap Vs[i] [Vs[i]] := λ (k : Fin Vs.length) => i k.succ
-  (v1 ∘ v2, compose_tuple v1s v2s)
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_tuple v1s v2s)
 infixr:85 " ∘ " => Subst.compose_tuple
 
 @[simp]
@@ -430,13 +468,10 @@ def Subst.compose_ren_right [RenMap T [T]] : Subst T -> Ren T -> Subst T
 infixr:85 (name := Subst.compose_ren_right_notation) " ∘ " => Subst.compose_ren_right
 
 def Subst.compose_ren_right_tuple
-  : {V : List (Type u2)} -> [∀ (i : Fin V.length), RenMap V[i] [V[i]]] ->
+  : {V : List (Type u2)} -> [RenMapAll V] ->
     List.Tuple Subst V -> List.Tuple Ren V -> List.Tuple Subst V
 | [], _, _, _ => .up .unit
-| .cons V Vs, i, (v1, v1s), (v2, v2s) =>
-  let i0 : RenMap V [V] := i 0
-  let i : (i : Fin Vs.length) → RenMap Vs[i] [Vs[i]] := λ (k : Fin Vs.length) => i k.succ
-  (v1 ∘ v2, compose_ren_right_tuple v1s v2s)
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_ren_right_tuple v1s v2s)
 infixr:85 " ∘ " => Subst.compose_ren_right_tuple
 
 @[simp]

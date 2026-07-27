@@ -97,7 +97,7 @@ class SubstMap (S : Type u1) (V : List (Type u2)) where
   smap : List.Tuple Subst V -> S -> S
 
 class SubstMapAll (V : List (Type u2)) where
-  rmap : ∀ (i : Fin V.length), SubstMap V[i] [V[i]]
+  smap : ∀ (i : Fin V.length), SubstMap V[i] [V[i]]
 
 export SubstMap (smap)
 

@@ -113,19 +113,19 @@ theorem Action.rmap0_su [RenMap S V] {r : List.Tuple Ren V} {t : S} : (su t)⟨r
   simp [RenMap.rmap]
 
 @[simp]
-def Action.smap1 [SubstMap S [S]] (σ : Subst S) : Action S -> Action S
+def Action.smap1 [SubstMap T [T]] (σ : Subst T) : Action T -> Action T
 | re x => σ.act x
 | su t => su t[σ]
 
-instance (priority := high) [SubstMap S [S]] : SubstMap (Action S) [S] where
+instance (priority := high) [SubstMap T [T]] : SubstMap (Action T) [T] where
   smap v := Action.smap1 v.1
 
 @[simp]
-theorem Action.smap1_re [SubstMap S [S]] {σ : Subst S} {x : Var S} : (@re S x)[σ] = σ.act x := by
+theorem Action.smap1_re [SubstMap T [T]] {σ : Subst T} {x : Nat} : (@re T x)[σ] = σ.act x := by
   simp [SubstMap.smap, Subst.act, SubstAction.act]
 
 @[simp]
-theorem Action.smap1_su [SubstMap S [S]] {σ : Subst S} {t : S} : (su t)[σ] = su t[σ] := by
+theorem Action.smap1_su [SubstMap T [T]] {σ : Subst T} {t : T} : (su t)[σ] = su t[σ] := by
   simp [SubstMap.smap]
 
 @[simp]
@@ -431,22 +431,18 @@ theorem Subst.compose_action [SubstMap T [T]] {σ τ : Subst T} {x : Var T}
 @[simp]
 theorem Subst.compose_pred_succ [SubstMap T [T]] : succ T ∘ pred T = id T := by
   simp [succ, pred, id, compose, act, SubstAction.act]
-  funext; case _ x => rw [Action.smap1_re]; simp
 
 @[simp]
 theorem Subst.compose_sub_add [SubstMap T [T]] {k} : add T k ∘ sub T k = id T := by
   simp [sub, add, id, compose, act, SubstAction.act]
-  funext; case _ x => rw [Action.smap1_re]; simp
 
 @[grind =]
 theorem Subst.compose_add_succ_right [SubstMap T [T]] {k} : add T (k + 1) = add T k ∘ succ T := by
-  simp [add, succ, compose, act, SubstAction.act]
-  funext; case _ x => rw [Action.smap1_re]; simp [act, SubstAction.act]; grind
+  simp [add, succ, compose, act, SubstAction.act]; grind
 
 @[grind =]
 theorem Subst.compose_add_succ_left [SubstMap T [T]] {k} : add T (k + 1) = succ T ∘ add T k := by
-  simp [add, succ, compose, act, SubstAction.act]
-  funext; case _ x => rw [Action.smap1_re]; simp [act, SubstAction.act]; grind
+  simp [add, succ, compose, act, SubstAction.act]; grind
 
 def Subst.compose_ren_left : Ren T -> Subst T -> Subst T
 | r, τ => .mk λ n => τ.act (r.act n)
@@ -603,16 +599,14 @@ theorem Ren.to_sub {k} : (sub T k).to = .sub T k := by simp [to, sub, Subst.sub]
 theorem Ren.to_lift [RenMap T [T]] {r : Ren T} {k} : (r.lift k).to = (@to T r).lift k := by
   cases r; simp [to, lift, Subst.lift, Subst.act, SubstAction.act]; case _ act =>
   funext; case _ x =>
-  cases x; simp; sorry
-  case _ n => sorry; --cases Nat.decLt (n + 1) k <;> simp [ite]
+  cases x; grind
+  case _ n => cases Nat.decLt (n + 1) k <;> simp [ite]
 
 @[simp]
 theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
   : @to T (r1 ∘ r2) = r1.to ∘ r2.to
 := by
   simp [to, compose, Subst.compose, Subst.act, SubstAction.act]
-  funext; case _ x =>
-  rw [Action.smap1_re]; simp
 
 def Ren.tuple_to : {V : List (Type u2)} -> (r : List.Tuple Ren V) -> List.Tuple Subst V
 | [], _ => .up .unit

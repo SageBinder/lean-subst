@@ -14,44 +14,44 @@ def List.rmap [RenMap S V] (r : List.Tuple Ren V) : List S -> List S
 instance [RenMap S V] : RenMap (List S) V where
   rmap := List.rmap
 
--- @[simp, grind =]
--- theorem List.rmap_nil [RenMap S V] {r : Ren T} : (@List.nil S)⟨r⟩ = [] := by
---   simp [RenMap.rmap, List.rmap]
+@[simp, grind =]
+theorem List.rmap_nil [RenMap S V] {r : List.Tuple Ren V} : (@List.nil S)⟨r,⟩ = [] := by
+  simp [RenMap.rmap, List.rmap]
 
--- @[simp, grind =]
--- theorem List.rmap_cons [RenMap S T] {x} {xs : List S} {r : Ren T} : (x::xs)⟨r⟩ = x⟨r⟩::xs⟨r⟩ := by
---   simp [RenMap.rmap, List.rmap]
+@[simp, grind =]
+theorem List.rmap_cons [RenMap S V] {x} {xs : List S} {r : List.Tuple Ren V} : (x::xs)⟨r,⟩ = x⟨r,⟩::xs⟨r,⟩ := by
+  simp [RenMap.rmap, List.rmap]
 
--- instance [RenMap S T] [RenMapId S T] : RenMapId (List S) T where
---   apply_id := by intro t; induction t <;> simp [*]
+instance [RenMap S V] [RenMapId S V] : RenMapId (List S) V where
+  apply_id := by intro t; induction t <;> simp [*]
 
--- instance [RenMap S T] [RenMapCompose S T] : RenMapCompose (List S) T where
---   apply_compose := by intro s σ τ; induction s <;> simp [*]
+instance [RenMap S V] [RenMapCompose S V] : RenMapCompose (List S) V where
+  apply_compose := by intro s σ τ; induction s <;> simp [*]
 
--- @[simp]
--- theorem List.rmap_append [RenMap S T] {xs ys : List S} {r : Ren T}
---   : (xs ++ ys)⟨r⟩ = xs⟨r⟩ ++ ys⟨r⟩
--- := by induction xs generalizing ys <;> simp [*]
+@[simp]
+theorem List.rmap_append [RenMap S V] {xs ys : List S} {r : List.Tuple Ren V}
+  : (xs ++ ys)⟨r,⟩ = xs⟨r,⟩ ++ ys⟨r,⟩
+:= by induction xs generalizing ys <;> simp [*]
 
--- def List.smap [SubstMap S T] (σ : Subst T) : List S -> List S
--- | [] => []
--- | .cons x xs => x[σ] :: smap σ xs
+def List.smap [SubstMap S V] (σ : List.Tuple Subst V) : List S -> List S
+| [] => []
+| .cons x xs => x[σ,] :: smap σ xs
 
--- instance [SubstMap S T] : SubstMap (List S) T where
---   smap := List.smap
+instance [SubstMap S V] : SubstMap (List S) V where
+  smap := List.smap
 
--- @[simp, grind =]
--- theorem List.smap_none [SubstMap S T] {σ : Subst T} : (@List.nil S)[σ] = [] := by
---   simp [SubstMap.smap, List.smap]
+@[simp, grind =]
+theorem List.smap_none [SubstMap S V] {σ : List.Tuple Subst V} : (@List.nil S)[σ,] = [] := by
+  simp [SubstMap.smap, List.smap]
 
--- @[simp, grind =]
--- theorem List.smap_some [SubstMap S T] {x} {xs : List S} {σ : Subst T} : (x::xs)[σ] = x[σ]::xs[σ]
--- := by simp [SubstMap.smap, List.smap]
+@[simp, grind =]
+theorem List.smap_some [SubstMap S V] {x} {xs : List S} {σ : List.Tuple Subst V} : (x::xs)[σ,] = x[σ,]::xs[σ,]
+:= by simp [SubstMap.smap, List.smap]
 
--- instance [RenMap S T] [SubstMap S T] [SubstMapId S T] : SubstMapId (List S) T where
---   apply_id := by intro t; induction t <;> simp [*]
+instance [RenMap S V] [SubstMap S V] [SubstMapId S V] : SubstMapId (List S) V where
+  apply_id := by intro t; induction t <;> simp [*]
 
--- instance [SubstMap T T] [SubstMap S T] [SubstMapCompose S T] : SubstMapCompose (List S) T where
---   apply_compose := by intro s σ τ; induction s <;> simp [*]
+instance [SubstMap S V] [SubstMapAll V] [SubstMapCompose S V] : SubstMapCompose (List S) V where
+  apply_compose := by intro s σ τ; induction s <;> simp [*]
 
 end LeanSubst

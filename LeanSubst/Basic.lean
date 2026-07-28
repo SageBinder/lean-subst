@@ -32,7 +32,7 @@ namespace Subst.Syntax
     | _ => Lean.Elab.throwUnsupportedSyntax
 end Subst.Syntax
 
-@[implicit_reducible, simp]
+@[implicit_reducible]
 def List.Tuple (F : Type u1 -> Type u2) : List (Type u1) -> Type u2
 | [] => ULift Unit
 | .cons x xs => F x × List.Tuple F xs

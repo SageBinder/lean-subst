@@ -375,7 +375,7 @@ theorem Subst.List.smap_map_su [SubstMap T [T]] {ℓ : List T} {σ : Subst T} : 
 
 macro "subst_solve_id" : tactic => `(tactic| {
   intro t; induction t
-  any_goals solve | simp +instances [*]
+  any_goals solve | simp_all +instances
   all_goals try simp at *; simp  +instances [*]; grind
 })
 

@@ -9,7 +9,7 @@ inductive Ty where
 | arrow : Ty -> Ty
 
 notation "★" => Ty.base
-infix:64 " -:> " => Ty.arrow
+infixr:64 " -:> " => Ty.arrow
 
 inductive Term where
 | var : Nat -> Term
@@ -59,7 +59,7 @@ theorem Term.rmap_var {x} {r : Ren Term} : (#x)⟨r⟩ = .var (r.act x) := by
   simp [RenMap.rmap]
 
 @[simp, grind =]
-theorem Term.rmap_app {t1 t2 : Term} {r : Ren Term} : (t1 • t2)⟨r⟩ = t1⟨r⟩ • t2⟨r⟩ := by
+theorem Term.rmap_app {t1 t2 : Term} {r : Ren Term} : (app t1 t2)⟨r⟩ = app t1⟨r⟩ t2⟨r⟩ := by
   simp +instances [RenMap.rmap]
 
 @[simp, grind =]
@@ -67,7 +67,7 @@ theorem Term.rmap_lam {A t} {r : Ren Term} : (λ[A] t)⟨r⟩ = λ[A] t⟨r.lift
   simp [RenMap.rmap]
 
 instance : RenMapId Term [Term] where
-  apply_id := by sorry
+  apply_id := by subst_solve_id
 
 instance : RenMapCompose Term [Term] where
   apply_compose := by sorry
@@ -86,7 +86,7 @@ theorem Term.smap_var {x} {σ : Subst Term} : (#x)[σ] = from_action (σ.act x) 
   simp [SubstMap.smap]
 
 @[simp, grind =]
-theorem Term.smap_app {t1 t2 : Term} {σ : Subst Term} : (t1 • t2)[σ] = t1[σ] • t2[σ] := by
+theorem Term.smap_app {t1 t2 : Term} {σ : Subst Term} : (app t1 t2)[σ] = app t1[σ] t2[σ] := by
   simp +instances [SubstMap.smap]
 
 @[simp, grind =]
@@ -94,7 +94,7 @@ theorem Term.smap_lam {A t} {σ : Subst Term} : (λ[A] t)[σ] = λ[A] t[σ.lift]
   simp [SubstMap.smap]
 
 instance : SubstMapId Term [Term] where
-  apply_id := by sorry
+  apply_id := by subst_solve_id
 
 instance : SubstMapStable Term [Term] where
   apply_stable := by sorry
@@ -106,6 +106,16 @@ instance : SubstMapRenComposeRight Term [Term] where
   apply_ren_compose_right := by sorry
 
 instance : SubstMapCompose Term [Term] where
-  apply_compose := by sorry
+  apply_compose := by
+    intro s σ τ
+    induction s generalizing σ τ
+    any_goals solve | simp_all +instances [List.Tuple]
+    try any_goals solve | (
+      try simp_all +instances [List.Tuple]
+      try simp [-Subst.rewrite_lift, *]
+      try funext; case _ x =>
+      try rw [<-Ren.to_lift]
+      try simp [-Subst.rewrite_lift, *]
+      try grind)
 
 end STLC

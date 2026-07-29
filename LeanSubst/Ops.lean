@@ -152,6 +152,7 @@ notation "+0r" => Ren.id _
 @[simp]
 theorem Ren.id_action {x} : (id T).act x = x := by simp [id]
 
+@[simp]
 def Ren.ids : (V : List (Type u2)) -> List.Tuple Ren V
 | [] => .up .unit
 | .cons x xs => (id x, ids xs)
@@ -162,6 +163,7 @@ notation "+0σ" => Subst.id _
 @[simp]
 theorem Subst.id_action {x} : (id T).act x = re x := by simp [id, act, SubstAction.act]
 
+@[simp]
 def Subst.ids : (V : List (Type u2)) -> List.Tuple Subst V
 | [] => .up .unit
 | .cons x xs => (id x, ids xs)

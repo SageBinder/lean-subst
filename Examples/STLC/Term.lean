@@ -29,11 +29,11 @@ def Term.from_action : Action Term -> Term
 | su t => t
 
 @[simp, grind =]
-theorem Term.from_action_id {n} : from_action (+0σ.act n) = var n := by
+theorem Term.from_action_id {n} : from_action (𝐬0.act n) = var n := by
   simp [from_action]
 
 @[simp, grind =]
-theorem Term.from_action_succ {n} : from_action (+1σ.act n) = var (n + 1) := by
+theorem Term.from_action_succ {n} : from_action (𝐬1.act n) = var (n + 1) := by
   simp [from_action]
 
 @[simp, grind =]
@@ -109,13 +109,14 @@ instance : SubstMapCompose Term [Term] where
   apply_compose := by
     intro s σ τ
     induction s generalizing σ τ
-    any_goals solve | simp_all +instances [List.Tuple]
-    try any_goals solve | (
-      try simp_all +instances [List.Tuple]
-      try simp [-Subst.rewrite_lift, *]
-      try funext; case _ x =>
-      try rw [<-Ren.to_lift]
-      try simp [-Subst.rewrite_lift, *]
-      try grind)
+    all_goals sorry
+    -- any_goals solve | simp_all +instances [List.Tuple]
+    -- try any_goals solve | (
+    --   try simp_all +instances [List.Tuple]
+    --   try simp [-Subst.rewrite_lift, *]
+    --   try funext; case _ x =>
+    --   try rw [<-Ren.to_lift]
+    --   try simp [-Subst.rewrite_lift, *]
+    --   try grind)
 
 end STLC

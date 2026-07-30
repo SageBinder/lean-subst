@@ -147,10 +147,11 @@ theorem Action.smap0_su [SubstMap S V] {σ : List.Tuple Subst V} {t : S} : (su t
 ---- Identity
 ----------------------------------------------------------------------------------------------------
 def Ren.id T : Ren T := ⟨λ x => x⟩
-notation "+0r" => Ren.id _
+notation "𝐫0" => Ren.id _
+notation "𝐫0(" T ")" => Ren.id T
 
 @[simp]
-theorem Ren.id_action {x} : (id T).act x = x := by simp [id]
+theorem Ren.id_action {x} : 𝐫0(T).act x = x := by simp [id]
 
 @[simp]
 def Ren.ids : (V : List (Type u2)) -> List.Tuple Ren V
@@ -158,10 +159,11 @@ def Ren.ids : (V : List (Type u2)) -> List.Tuple Ren V
 | .cons x xs => (id x, ids xs)
 
 def Subst.id T : Subst T := ⟨λ x => re x⟩
-notation "+0σ" => Subst.id _
+notation "𝐬0" => Subst.id _
+notation "𝐬0(" T ")" => Subst.id T
 
 @[simp]
-theorem Subst.id_action {x} : (id T).act x = re x := by simp [id, act, SubstAction.act]
+theorem Subst.id_action {x} : 𝐬0(T).act x = re x := by simp [id, act, SubstAction.act]
 
 @[simp]
 def Subst.ids : (V : List (Type u2)) -> List.Tuple Subst V
@@ -171,27 +173,27 @@ def Subst.ids : (V : List (Type u2)) -> List.Tuple Subst V
 ---- Successor
 ----------------------------------------------------------------------------------------------------
 def Ren.succ T : Ren T := ⟨(· + 1)⟩
-notation "+1r" => Ren.succ _
+notation "𝐫1" => Ren.succ _
+notation "𝐫1(" T ")" => Ren.succ T
 
 @[simp]
-theorem Ren.succ_action {x} : (succ T).act x = x + 1 := by simp [succ]
+theorem Ren.succ_action {x} : 𝐫1(T).act x = x + 1 := by simp [succ]
 
 def Subst.succ T : Subst T := ⟨λ x => re $ x + 1⟩
-notation "+1σ" => Subst.succ _
+notation "𝐬1" => Subst.succ _
+notation "𝐬1(" T ")" => Subst.succ T
 
 @[simp]
-theorem Subst.succ_action {x} : (succ T).act x = re (x + 1) := by simp [succ, act, SubstAction.act]
+theorem Subst.succ_action {x} : 𝐬1(T).act x = re (x + 1) := by simp [succ, act, SubstAction.act]
 ----------------------------------------------------------------------------------------------------
 ---- Predecessor
 ----------------------------------------------------------------------------------------------------
 def Ren.pred T : Ren T := ⟨(· - 1)⟩
-notation "-1r" => Ren.pred _
 
 @[simp]
 theorem Ren.pred_action {x} : (pred T).act x = x - 1 := by simp [pred]
 
 def Subst.pred T : Subst T := ⟨λ x => re $ x - 1⟩
-notation "-1σ" => Subst.pred _
 
 @[simp]
 theorem Subst.pred_action {x} : (pred T).act x = re (x - 1) := by simp [pred, act, SubstAction.act]
@@ -199,55 +201,51 @@ theorem Subst.pred_action {x} : (pred T).act x = re (x - 1) := by simp [pred, ac
 ---- Addition
 ----------------------------------------------------------------------------------------------------
 def Ren.add T (k : Nat) : Ren T := ⟨(· + k)⟩
-notation "+r" => Ren.add _
 
 @[simp]
 theorem Ren.add_action {k x} : (add T k).act x = x + k := by simp [Ren.add]
 
 @[simp]
-theorem Ren.add_zero : add T 0 = +0r := by simp [Ren.add, Ren.id]
+theorem Ren.add_zero : add T 0 = 𝐫0 := by simp [Ren.add, Ren.id]
 
 @[simp]
-theorem Ren.add_one : add T 1 = +1r := by simp [Ren.add, Ren.succ]
+theorem Ren.add_one : add T 1 = 𝐫1 := by simp [Ren.add, Ren.succ]
 
 def Subst.add T (k : Nat) : Subst T := ⟨λ x => re $ x + k⟩
-notation "+σ" => Subst.add _
 
 @[simp]
 theorem Subst.add_action {k x} : (add T k).act x = re (x + k) := by simp [add, act, SubstAction.act]
 
 @[simp]
-theorem Subst.add_zero : add T 0 = +0σ := by simp [add, id]
+theorem Subst.add_zero : add T 0 = 𝐬0 := by simp [add, id]
 
 @[simp]
-theorem Subst.add_one : add T 1 = +1σ := by simp [add, succ]
+theorem Subst.add_one : add T 1 = 𝐬1 := by simp [add, succ]
 ----------------------------------------------------------------------------------------------------
 ---- Subtraction
 ----------------------------------------------------------------------------------------------------
 def Ren.sub T (k : Nat) : Ren T := ⟨(· - k)⟩
-notation "-r" => Ren.sub _
 
 @[simp]
 theorem Ren.sub_action {k x} : (sub T k).act x = x - k := by simp [sub]
 
 @[simp]
-theorem Ren.sub_zero : sub T 0 = +0r := by simp [sub, id]
+theorem Ren.sub_zero : sub T 0 = 𝐫0 := by simp [sub, id]
 
 @[simp]
-theorem Ren.sub_one : sub T 1 = -1r := by simp [sub, pred]
+theorem Ren.sub_one : sub T 1 = pred _ := by simp [sub, pred]
 
 def Subst.sub T (k : Nat) : Subst T := ⟨λ x => re $ x - k⟩
-notation "-σ" => Subst.sub _
 
 @[simp]
 theorem Subst.sub_action {k x} : (@sub T k).act x = re (x - k) := by
   simp [sub, act, SubstAction.act]
 
 @[simp]
-theorem Subst.sub_zero : sub T 0 = +0σ := by simp [sub, id]
+theorem Subst.sub_zero : sub T 0 = 𝐬0 := by simp [sub, id]
 
 @[simp]
-theorem Subst.sub_one : sub T 1 = -1σ := by simp [sub, pred]
+theorem Subst.sub_one : sub T 1 = pred _ := by simp [sub, pred]
 
 ----------------------------------------------------------------------------------------------------
 ---- Cons
@@ -380,102 +378,123 @@ theorem Subst.append_ren_action_ge {σ : Subst T} {i}
 ----------------------------------------------------------------------------------------------------
 def Ren.compose : Ren T -> Ren T -> Ren T
 | r1, r2 => .mk λ n => r2.act (r1.act n)
-infixr:85 " ∘ " => Ren.compose
+
+instance : AndThen (Ren T) where
+  andThen r f := Ren.compose r (f ())
 
 def Ren.compose_tuple : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Ren V -> List.Tuple Ren V
 | [], _, _ => .up .unit
-| .cons _ _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_tuple v1s v2s)
-infixr:85 " ∘ " => Ren.compose_tuple
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_tuple v1s v2s)
+
+instance : AndThen (List.Tuple Ren V) where
+  andThen r f := Ren.compose_tuple r (f ())
 
 @[simp]
-theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 ∘ r2).act x = r2.act (r1.act x) := by
-  simp [compose]
+theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 >> r2).act x = r2.act (r1.act x) := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
 @[simp]
-theorem Ren.compose_id_left {r : Ren T} : +0r ∘ r = r := by simp [compose, id]
+theorem Ren.compose_id_left {r : Ren T} : 𝐫0 >> r = r := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose, id]
 
 @[simp]
-theorem Ren.compose_id_right {r : Ren T} : r ∘ +0r = r := by simp [compose, id]
+theorem Ren.compose_id_right {r : Ren T} : r >> 𝐫0 = r := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose, id]
 
 @[simp]
-theorem Ren.compose_assoc {r1 r2 r3 : Ren T} : (r1 ∘ r2) ∘ r3 = r1 ∘ r2 ∘ r3 := by simp [compose]
+theorem Ren.compose_assoc {r1 r2 r3 : Ren T} : (r1 >> r2) >> r3 = r1 >> r2 >> r3 := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
 @[simp]
-theorem Ren.compose_pred_succ : +1r ∘ -1r = id T := by simp [succ, pred, id, compose]
+theorem Ren.compose_pred_succ : 𝐫1 >> pred T = id T := by
+  simp [HAndThen.hAndThen, AndThen.andThen, succ, pred, id, compose]
 
 @[simp]
-theorem Ren.compose_sub_add {k} : +r k ∘ -r k = id T := by simp [sub, add, id, compose]
+theorem Ren.compose_sub_add {k} : add T k >> sub T k = id T := by
+  simp [HAndThen.hAndThen, AndThen.andThen, sub, add, id, compose]
 
 @[grind =]
-theorem Ren.compose_add_succ_right {k} : add T (k + 1) = +r k ∘ +1r := by
-  simp [add, succ, compose]; grind
+theorem Ren.compose_add_succ_right {k} : add T (k + 1) = add T k >> 𝐫1 := by
+  simp [HAndThen.hAndThen, AndThen.andThen, add, succ, compose]; grind
 
 @[grind =]
-theorem Ren.compose_add_succ_left {k} : add T (k + 1) = +1r ∘ +r k := by
-  simp [add, succ, compose]; grind
+theorem Ren.compose_add_succ_left {k} : add T (k + 1) = 𝐫1 >> add T k := by
+  simp [HAndThen.hAndThen, AndThen.andThen, add, succ, compose]; grind
 
 def Subst.compose [SubstMap T [T]] : Subst T -> Subst T -> Subst T
 | σ, τ => .mk λ n => (σ.act n)[τ]
-infixr:85 (name := Subst.compose_notation) " ∘ " => Subst.compose
+
+instance [SubstMap T [T]] : AndThen (Subst T) where
+  andThen σ f := Subst.compose σ (f ())
 
 def Subst.compose_tuple
   : {V : List (Type u2)} -> [SubstMapAll V] ->
     List.Tuple Subst V -> List.Tuple Subst V -> List.Tuple Subst V
 | [], _, _, _ => .up .unit
-| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_tuple v1s v2s)
-infixr:85 " ∘ " => Subst.compose_tuple
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_tuple v1s v2s)
+
+instance [SubstMapAll V] : AndThen (List.Tuple Subst V) where
+  andThen σ f := Subst.compose_tuple σ (f ())
 
 @[simp]
 theorem Subst.compose_action [SubstMap T [T]] {σ τ : Subst T} {x : Var T}
-  : (σ ∘ τ).act x = (σ.act x)[τ]
-:= by simp [compose, act, SubstAction.act]
+  : (σ >> τ).act x = (σ.act x)[τ]
+:= by simp [HAndThen.hAndThen, AndThen.andThen, compose, act, SubstAction.act]
 
 @[simp]
-theorem Subst.compose_pred_succ [SubstMap T [T]] : succ T ∘ pred T = id T := by
-  simp [succ, pred, id, compose, act, SubstAction.act]
+theorem Subst.compose_pred_succ [SubstMap T [T]] : succ T >> pred T = id T := by
+  simp [HAndThen.hAndThen, AndThen.andThen, succ, pred, id, compose, act, SubstAction.act]
 
 @[simp]
-theorem Subst.compose_sub_add [SubstMap T [T]] {k} : add T k ∘ sub T k = id T := by
-  simp [sub, add, id, compose, act, SubstAction.act]
+theorem Subst.compose_sub_add [SubstMap T [T]] {k} : add T k >> sub T k = id T := by
+  simp [HAndThen.hAndThen, AndThen.andThen, sub, add, id, compose, act, SubstAction.act]
 
 @[grind =]
-theorem Subst.compose_add_succ_right [SubstMap T [T]] {k} : add T (k + 1) = add T k ∘ succ T := by
-  simp [add, succ, compose, act, SubstAction.act]; grind
+theorem Subst.compose_add_succ_right [SubstMap T [T]] {k} : add T (k + 1) = add T k >> succ T := by
+  simp [HAndThen.hAndThen, AndThen.andThen, add, succ, compose, act, SubstAction.act]; grind
 
 @[grind =]
-theorem Subst.compose_add_succ_left [SubstMap T [T]] {k} : add T (k + 1) = succ T ∘ add T k := by
-  simp [add, succ, compose, act, SubstAction.act]; grind
+theorem Subst.compose_add_succ_left [SubstMap T [T]] {k} : add T (k + 1) = succ T >> add T k := by
+  simp [HAndThen.hAndThen, AndThen.andThen, add, succ, compose, act, SubstAction.act]; grind
 
 def Subst.compose_ren_left : Ren T -> Subst T -> Subst T
 | r, τ => .mk λ n => τ.act (r.act n)
-infixr:85 (name := Subst.compose_ren_left_notation) " ∘ " => Subst.compose_ren_left
+
+instance : HAndThen (Ren T) (Subst T) (Subst T) where
+  hAndThen r f := Subst.compose_ren_left r (f ())
 
 def Subst.compose_ren_left_tuple
   : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Subst V -> List.Tuple Subst V
 | [],  _, _ => .up .unit
-| .cons _ _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_ren_left_tuple v1s v2s)
-infixr:85 " ∘ " => Subst.compose_ren_left_tuple
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_left_tuple v1s v2s)
+
+instance : HAndThen (List.Tuple Ren V) (List.Tuple Subst V) (List.Tuple Subst V) where
+  hAndThen r f := Subst.compose_ren_left_tuple r (f ())
 
 @[simp]
 theorem Subst.compose_ren_left_action {r : Ren T} {τ : Subst T} {x}
-  : (r ∘ τ).act x = τ.act (r.act x)
-:= by simp [compose_ren_left, act, SubstAction.act]
+  : (r >> τ).act x = τ.act (r.act x)
+:= by simp [HAndThen.hAndThen, compose_ren_left, act, SubstAction.act]
 
 def Subst.compose_ren_right [RenMap T [T]] : Subst T -> Ren T -> Subst T
 | σ, r => .mk λ n => (σ.act n)⟨r⟩
-infixr:85 (name := Subst.compose_ren_right_notation) " ∘ " => Subst.compose_ren_right
+
+instance [RenMap T [T]] : HAndThen (Subst T) (Ren T) (Subst T) where
+  hAndThen σ f := Subst.compose_ren_right σ (f ())
 
 def Subst.compose_ren_right_tuple
   : {V : List (Type u2)} -> [RenMapAll V] ->
     List.Tuple Subst V -> List.Tuple Ren V -> List.Tuple Subst V
 | [], _, _, _ => .up .unit
-| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 ∘ v2, compose_ren_right_tuple v1s v2s)
-infixr:85 " ∘ " => Subst.compose_ren_right_tuple
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_right_tuple v1s v2s)
+
+instance [RenMapAll V] : HAndThen (List.Tuple Subst V) (List.Tuple Ren V) (List.Tuple Subst V) where
+  hAndThen σ f := Subst.compose_ren_right_tuple σ (f ())
 
 @[simp]
 theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T} {x : Nat}
-  : (σ ∘ r).act x = (σ.act x)⟨r⟩
-:= by simp [compose_ren_right, act, SubstAction.act]
+  : (σ >> r).act x = (σ.act x)⟨r⟩
+:= by simp [HAndThen.hAndThen, compose_ren_right, act, SubstAction.act]
 
 -- def Subst.hcompose [SubstMap S T] : Subst S -> Subst T -> Subst S
 -- | σ, τ => .mk λ n => (σ.act n)[τ]
@@ -526,13 +545,13 @@ theorem Ren.lift_id {k} : lift (id T) k = id T := by
   simp [id, lift]; congr; funext; case _ x =>
   cases x <;> simp; grind
 
-theorem Ren.lift_compose1 {r1 r2 : Ren T} : (r1 ∘ r2).lift = r1.lift ∘ r2.lift := by
-  simp [compose, lift]
+theorem Ren.lift_compose1 {r1 r2 : Ren T} : (r1 >> r2).lift = r1.lift >> r2.lift := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose, lift]
   funext; case _ x =>
   cases x <;> simp
 
 @[simp]
-theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 ∘ r2).lift k = r1.lift k ∘ r2.lift k := by
+theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 >> r2).lift k = r1.lift k >> r2.lift k := by
   induction k generalizing r1 r2; simp
   case _ k ih =>
     rw [lift_of_succ, ih]
@@ -606,9 +625,9 @@ theorem Ren.to_lift [RenMap T [T]] {r : Ren T} {k} : (r.lift k).to = (@to T r).l
 
 @[simp]
 theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
-  : @to T (r1 ∘ r2) = r1.to ∘ r2.to
+  : @to T (r1 >> r2) = r1.to >> r2.to
 := by
-  simp [to, compose, Subst.compose, Subst.act, SubstAction.act]
+  simp [to, HAndThen.hAndThen, AndThen.andThen, compose, Subst.compose, Subst.act, SubstAction.act]
 
 def Ren.tuple_to : {V : List (Type u2)} -> (r : List.Tuple Ren V) -> List.Tuple Subst V
 | [], _ => .up .unit

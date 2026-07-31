@@ -20,10 +20,10 @@ theorem Ren.apply_id1 [RenMap S [T]] [RenMapId S [T]] {s : S} : s⟨id T⟩ = s 
 theorem Ren.apply_id2 [RenMap S [T1, T2]] [RenMapId S [T1, T2]] {s : S} : s⟨id T1, id T2⟩ = s := RenMapId.apply_id
 
 class RenMapCompose (S : Type u1) (V : List (Type u2)) [RenMap S V] where
-  apply_compose {s : S} {r1 r2 : List.Tuple Ren V} : s⟨r1,⟩⟨r2,⟩ = s⟨r1 >> r2,⟩
+  apply_compose {s : S} {r1 r2 : RenVec V} : s⟨r1,⟩⟨r2,⟩ = s⟨r1 >> r2,⟩
 
 @[simp, grind =]
-theorem Ren.apply_compose [RenMap S V] [RenMapCompose S V] {s : S} {r1 r2 : List.Tuple Ren V}
+theorem Ren.apply_compose [RenMap S V] [RenMapCompose S V] {s : S} {r1 r2 : RenVec V}
   : s⟨r1,⟩⟨r2,⟩ = s⟨r1 >> r2,⟩
 := RenMapCompose.apply_compose
 
@@ -48,14 +48,14 @@ instance (priority := high) [RenMap T [T]] [RenMapCompose T [T]] : RenMapCompose
   apply_compose := by
     intro s r1 r2; cases s
     all_goals
-      simp [List.Tuple] at r1 r2
-      simp [rmap, HAndThen.hAndThen, AndThen.andThen, Ren.compose_tuple, Ren.compose]
+      simp [RenVec] at r1 r2
+      simp [rmap, HAndThen.hAndThen, AndThen.andThen, RenVec.compose, Ren.compose]
 
 instance (priority := low) [RenMap S V] [RenMapCompose S V] : RenMapCompose (Action S) V where
   apply_compose := by intro s; cases s <;> simp
 
 class SubstMapStable (S : Type u1) (V : List $ Type u2) [RenMap S V] [SubstMap S V] where
-  apply_stable (r : List.Tuple Ren V) (σ : List.Tuple Subst V) : Ren.tuple_to r = σ -> rmap (S := S) r = smap σ
+  apply_stable (r : RenVec V) (σ : SubstVec V) : r.to = σ -> rmap (S := S) r = smap σ
 
 class SubstMapId (S : Type u1) (V : List $ Type u2) [SubstMap S V] where
   apply_id {s : S} : s[Subst.ids V,] = s
@@ -70,12 +70,12 @@ theorem Subst.apply_id1 [SubstMap S [T]] [SubstMapId S [T]] {s : S} : s[id T] = 
 theorem Subst.apply_id2 [SubstMap S [T1, T2]] [SubstMapId S [T1, T2]] {s : S} : s[id T1, id T2] = s := SubstMapId.apply_id
 
 class SubstMapRenComposeLeft (S : Type u1) (V : List $ Type u2) [RenMap S V] [SubstMap S V] where
-  apply_ren_compose_left {s : S} {r : List.Tuple Ren V} {τ : List.Tuple Subst V} : s⟨r,⟩[τ,] = s[r >> τ,]
+  apply_ren_compose_left {s : S} {r : RenVec V} {τ : SubstVec V} : s⟨r,⟩[τ,] = s[r >> τ,]
 
 @[simp, grind =]
 theorem Subst.apply_ren_compose_left
   [RenMap S V] [SubstMap S V] [SubstMapRenComposeLeft S V]
-  {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V}
+  {s : S} {r : RenVec V} {σ : SubstVec V}
   : s⟨r,⟩[σ,] = s[r >> σ,]
 := SubstMapRenComposeLeft.apply_ren_compose_left
 
@@ -94,12 +94,12 @@ theorem Subst.apply_ren_compose_left2
 := Subst.apply_ren_compose_left
 
 class SubstMapRenComposeRight (S : Type u1) (V : List $ Type u2) [RenMap S V] [RenMapAll V] [SubstMap S V] where
-  apply_ren_compose_right {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V} : s[σ,]⟨r,⟩ = s[σ >> r,]
+  apply_ren_compose_right {s : S} {r : RenVec V} {σ : SubstVec V} : s[σ,]⟨r,⟩ = s[σ >> r,]
 
 @[simp, grind =]
 theorem Subst.apply_ren_compose_right
   [RenMap S V] [RenMapAll V] [SubstMap S V] [SubstMapRenComposeRight S V]
-  {s : S} {r : List.Tuple Ren V} {σ : List.Tuple Subst V}
+  {s : S} {r : RenVec V} {σ : SubstVec V}
   : s[σ,]⟨r,⟩ = s[σ >> r,]
 := SubstMapRenComposeRight.apply_ren_compose_right
 
@@ -118,12 +118,12 @@ theorem Subst.apply_ren_compose_right2
 := Subst.apply_ren_compose_right
 
 class SubstMapCompose (S : Type u1) (V : List $ Type u2) [SubstMap S V] [SubstMapAll V] where
-  apply_compose {s : S} {σ τ : List.Tuple Subst V} : s[σ,][τ,] = s[σ >> τ,]
+  apply_compose {s : S} {σ τ : SubstVec V} : s[σ,][τ,] = s[σ >> τ,]
 
 @[simp, grind =]
 theorem Subst.apply_compose
   [SubstMap S V] [SubstMapAll V] [SubstMapCompose S V]
-  {s : S} {σ1 σ2 : List.Tuple Subst V}
+  {s : S} {σ1 σ2 : SubstVec V}
   : s[σ1,][σ2,] = s[σ1 >> σ2,]
 := SubstMapCompose.apply_compose
 

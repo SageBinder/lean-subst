@@ -97,7 +97,7 @@ theorem Action.rmap1_su [RenMap S [S]] {r : Ren S} {t : S} : (su t)⟨r⟩ = su 
   simp [RenMap.rmap]
 
 @[simp]
-def Action.rmap0 [RenMap S V] (r : List.Tuple Ren V) : Action S -> Action S
+def Action.rmap0 [RenMap S V] (r : RenVec V) : Action S -> Action S
 | re x => re x
 | su t => su t⟨r,⟩
 
@@ -105,11 +105,11 @@ instance (priority := low) [RenMap S V] : RenMap (Action S) V where
   rmap := Action.rmap0
 
 @[simp]
-theorem Action.rmap0_re [RenMap S V] {r : List.Tuple Ren V} {x : Var S} : (@re S x)⟨r,⟩ = re x := by
+theorem Action.rmap0_re [RenMap S V] {r : RenVec V} {x : Var S} : (@re S x)⟨r,⟩ = re x := by
   simp [RenMap.rmap]
 
 @[simp]
-theorem Action.rmap0_su [RenMap S V] {r : List.Tuple Ren V} {t : S} : (su t)⟨r,⟩ = su t⟨r,⟩ := by
+theorem Action.rmap0_su [RenMap S V] {r : RenVec V} {t : S} : (su t)⟨r,⟩ = su t⟨r,⟩ := by
   simp [RenMap.rmap]
 
 @[simp]
@@ -129,7 +129,7 @@ theorem Action.smap1_su [SubstMap T [T]] {σ : Subst T} {t : T} : (su t)[σ] = s
   simp [SubstMap.smap]
 
 @[simp]
-def Action.smap0 [SubstMap S V] (σ : List.Tuple Subst V) : Action S -> Action S
+def Action.smap0 [SubstMap S V] (σ : SubstVec V) : Action S -> Action S
 | re x => re x
 | su t => su t[σ,]
 
@@ -137,11 +137,11 @@ instance (priority := low) [SubstMap S V] : SubstMap (Action S) V where
   smap := Action.smap0
 
 @[simp]
-theorem Action.smap0_re [SubstMap S V] {σ : List.Tuple Subst V} {x : Var S} : (@re S x)[σ,] = re x := by
+theorem Action.smap0_re [SubstMap S V] {σ : SubstVec V} {x : Var S} : (@re S x)[σ,] = re x := by
   simp [SubstMap.smap]
 
 @[simp]
-theorem Action.smap0_su [SubstMap S V] {σ : List.Tuple Subst V} {t : S} : (su t)[σ,] = su t[σ,] := by
+theorem Action.smap0_su [SubstMap S V] {σ : SubstVec V} {t : S} : (su t)[σ,] = su t[σ,] := by
   simp [SubstMap.smap]
 ----------------------------------------------------------------------------------------------------
 ---- Identity
@@ -154,8 +154,8 @@ notation "𝐫0(" T ")" => Ren.id T
 theorem Ren.id_action {x} : 𝐫0(T).act x = x := by simp [id]
 
 @[simp]
-def Ren.ids : (V : List (Type u2)) -> List.Tuple Ren V
-| [] => .up .unit
+def Ren.ids : (V : List (Type u2)) -> RenVec V
+| [] => .unit
 | .cons x xs => (id x, ids xs)
 
 def Subst.id T : Subst T := ⟨λ x => re x⟩
@@ -166,8 +166,8 @@ notation "𝐬0(" T ")" => Subst.id T
 theorem Subst.id_action {x} : 𝐬0(T).act x = re x := by simp [id, act, SubstAction.act]
 
 @[simp]
-def Subst.ids : (V : List (Type u2)) -> List.Tuple Subst V
-| [] => .up .unit
+def Subst.ids : (V : List (Type u2)) -> SubstVec V
+| [] => .unit
 | .cons x xs => (id x, ids xs)
 ----------------------------------------------------------------------------------------------------
 ---- Successor
@@ -382,12 +382,12 @@ def Ren.compose : Ren T -> Ren T -> Ren T
 instance : AndThen (Ren T) where
   andThen r f := Ren.compose r (f ())
 
-def Ren.compose_tuple : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Ren V -> List.Tuple Ren V
-| [], _, _ => .up .unit
-| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_tuple v1s v2s)
+def RenVec.compose : {V : List (Type u2)} -> RenVec V -> RenVec V -> RenVec V
+| [], _, _ => .unit
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose v1s v2s)
 
-instance : AndThen (List.Tuple Ren V) where
-  andThen r f := Ren.compose_tuple r (f ())
+instance : AndThen (RenVec V) where
+  andThen r f := RenVec.compose r (f ())
 
 @[simp]
 theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 >> r2).act x = r2.act (r1.act x) := by
@@ -427,14 +427,14 @@ def Subst.compose [SubstMap T [T]] : Subst T -> Subst T -> Subst T
 instance [SubstMap T [T]] : AndThen (Subst T) where
   andThen σ f := Subst.compose σ (f ())
 
-def Subst.compose_tuple
+def SubstVec.compose
   : {V : List (Type u2)} -> [SubstMapAll V] ->
-    List.Tuple Subst V -> List.Tuple Subst V -> List.Tuple Subst V
-| [], _, _, _ => .up .unit
-| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_tuple v1s v2s)
+    SubstVec V -> SubstVec V -> SubstVec V
+| [], _, _, _ => .unit
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose v1s v2s)
 
-instance [SubstMapAll V] : AndThen (List.Tuple Subst V) where
-  andThen σ f := Subst.compose_tuple σ (f ())
+instance [SubstMapAll V] : AndThen (SubstVec V) where
+  andThen σ f := SubstVec.compose σ (f ())
 
 @[simp]
 theorem Subst.compose_action [SubstMap T [T]] {σ τ : Subst T} {x : Var T}
@@ -463,13 +463,13 @@ def Subst.compose_ren_left : Ren T -> Subst T -> Subst T
 instance : HAndThen (Ren T) (Subst T) (Subst T) where
   hAndThen r f := Subst.compose_ren_left r (f ())
 
-def Subst.compose_ren_left_tuple
-  : {V : List (Type u2)} -> List.Tuple Ren V -> List.Tuple Subst V -> List.Tuple Subst V
-| [],  _, _ => .up .unit
-| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_left_tuple v1s v2s)
+def SubstVec.compose_ren_left
+  : {V : List (Type u2)} -> RenVec V -> SubstVec V -> SubstVec V
+| [],  _, _ => .unit
+| .cons _ _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_left v1s v2s)
 
-instance : HAndThen (List.Tuple Ren V) (List.Tuple Subst V) (List.Tuple Subst V) where
-  hAndThen r f := Subst.compose_ren_left_tuple r (f ())
+instance : HAndThen (RenVec V) (SubstVec V) (SubstVec V) where
+  hAndThen r f := SubstVec.compose_ren_left r (f ())
 
 @[simp]
 theorem Subst.compose_ren_left_action {r : Ren T} {τ : Subst T} {x}
@@ -482,14 +482,14 @@ def Subst.compose_ren_right [RenMap T [T]] : Subst T -> Ren T -> Subst T
 instance [RenMap T [T]] : HAndThen (Subst T) (Ren T) (Subst T) where
   hAndThen σ f := Subst.compose_ren_right σ (f ())
 
-def Subst.compose_ren_right_tuple
+def SubstVec.compose_ren_right
   : {V : List (Type u2)} -> [RenMapAll V] ->
-    List.Tuple Subst V -> List.Tuple Ren V -> List.Tuple Subst V
-| [], _, _, _ => .up .unit
-| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_right_tuple v1s v2s)
+    SubstVec V -> RenVec V -> SubstVec V
+| [], _, _, _ => .unit
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose_ren_right v1s v2s)
 
-instance [RenMapAll V] : HAndThen (List.Tuple Subst V) (List.Tuple Ren V) (List.Tuple Subst V) where
-  hAndThen σ f := Subst.compose_ren_right_tuple σ (f ())
+instance [RenMapAll V] : HAndThen (SubstVec V) (RenVec V) (SubstVec V) where
+  hAndThen σ f := SubstVec.compose_ren_right σ (f ())
 
 @[simp]
 theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T} {x : Nat}
@@ -519,6 +519,10 @@ theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T}
 ----------------------------------------------------------------------------------------------------
 def Ren.lift (r : Ren T) (k : Nat := 1) : Ren T := .mk λ n =>
   if n < k then n else r.act (n - k) + k
+
+def RenVec.lift : {V : List (Type u2)} -> RenVec V -> (k : Nat := 1) -> RenVec V
+| [], _, _ => .unit
+| .cons _ _, (t, ts), k => (t.lift k, ts.lift k)
 
 @[simp, grind <-]
 theorem Ren.lift_action_lt {r : Ren T} {k i} (h : i < k) : (lift r k).act i = i := by
@@ -561,6 +565,10 @@ theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 >> r2).lift k = r1.lift k >> 
 
 def Subst.lift [RenMap T [T]] (σ : Subst T) (k : Nat := 1) : Subst T := .mk λ n =>
   if n < k then re n else (σ.act (n - k))⟨Ren.add T k⟩
+
+def SubstVec.lift : {V : List (Type u2)} -> [RenMapAll V] -> (σ : SubstVec V) -> (k : Nat := 1) -> SubstVec V
+| [], _, _, _ => .unit
+| .cons _ _, _, (t, ts), k => (t.lift k, ts.lift k)
 
 @[simp, grind <-]
 theorem Subst.lift_action_lt [RenMap T [T]] {σ : Subst T} {k i} (h : i < k)
@@ -629,9 +637,9 @@ theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
 := by
   simp [to, HAndThen.hAndThen, AndThen.andThen, compose, Subst.compose, Subst.act, SubstAction.act]
 
-def Ren.tuple_to : {V : List (Type u2)} -> (r : List.Tuple Ren V) -> List.Tuple Subst V
-| [], _ => .up .unit
-| .cons _ _, (r, rs) => (r.to, tuple_to rs)
+def RenVec.to : {V : List (Type u2)} -> (r : RenVec V) -> SubstVec V
+| [], _ => .unit
+| .cons _ _, (r, rs) => (r.to, rs.to)
 ----------------------------------------------------------------------------------------------------
 ---- Range
 ----------------------------------------------------------------------------------------------------

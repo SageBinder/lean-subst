@@ -60,7 +60,7 @@ theorem Subst.compose_commute_add [RenMap T [T]] [SubstMap T [T]] [SubstMapStabl
   simp [HAndThen.hAndThen, AndThen.andThen, compose]; funext; case _ x =>
   generalize zdef : τ.act x = z
   cases z <;> simp
-  rw [SubstMapStable.apply_stable]; simp [Ren.tuple_to]
+  rw [SubstMapStable.apply_stable]; simp [RenVec.to]
 
 theorem Subst.compose_commute_add_ren_subst [RenMap T [T]] [SubstMap T [T]] [SubstMapStable T [T]] {k} {τ : Subst T}
   : τ >> Ren.add T k = Ren.add T k >> τ.lift k
@@ -328,7 +328,7 @@ theorem Subst.compose_compose_left_succ
   simp [HAndThen.hAndThen, AndThen.andThen, compose, compose_ren_right, smap]
   congr ; funext n
   generalize zdef : σ.act n = z
-  induction z <;> simp [HAndThen.hAndThen, compose_ren_left_tuple, compose_ren_left]; congr
+  induction z <;> simp [HAndThen.hAndThen, SubstVec.compose_ren_left, compose_ren_left]; congr
 
 theorem Subst.compose_left_cons_lift1_indirect
   [RenMap T [T]] [RenMapId T [T]]
@@ -357,15 +357,15 @@ theorem Subst.compose_lift_append_indirect {k}
     -- grind [compose_left_cons_lift_indirect]
 
 @[simp]
-theorem Subst.List.smap_append [SubstMap S V] {a b : List S} {σ : List.Tuple Subst V}
+theorem Subst.List.smap_append [SubstMap S V] {a b : List S} {σ : SubstVec V}
   : (a ++ b)[σ,] = a[σ,] ++ b[σ,] := by induction a <;> grind
 
 @[simp]
-theorem Subst.List.rmap_reverse [RenMap S V] {ℓ : List S} {r : List.Tuple Ren V} : ℓ.reverse⟨r,⟩ = ℓ⟨r,⟩.reverse := by
+theorem Subst.List.rmap_reverse [RenMap S V] {ℓ : List S} {r : RenVec V} : ℓ.reverse⟨r,⟩ = ℓ⟨r,⟩.reverse := by
   induction ℓ <;> simp ; grind
 
 @[simp]
-theorem Subst.List.smap_reverse [SubstMap S V] {ℓ : List S} {σ : List.Tuple Subst V} : ℓ.reverse[σ,] = ℓ[σ,].reverse := by
+theorem Subst.List.smap_reverse [SubstMap S V] {ℓ : List S} {σ : SubstVec V} : ℓ.reverse[σ,] = ℓ[σ,].reverse := by
   induction ℓ <;> simp ; grind
 
 @[simp]

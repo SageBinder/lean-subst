@@ -20,7 +20,7 @@ namespace Subst.Syntax
     `(List.cons $(<- exprToSyntax x) $xs')
 
   def form_prod : List Lean.Expr -> TermElabM (Lean.TSyntax `term)
-  | [] => `(ULift.up Unit.unit)
+  | [] => `(PUnit.unit)
   | .cons x xs => do
     let xs' <- form_prod xs
     `(Prod.mk $(<- exprToSyntax x) $xs')
@@ -32,19 +32,19 @@ namespace Subst.Syntax
     | _ => Lean.Elab.throwUnsupportedSyntax
 end Subst.Syntax
 
-@[implicit_reducible]
-def List.Tuple (F : Type u1 -> Type u2) : List (Type u1) -> Type u2
-| [] => ULift Unit
-| .cons x xs => F x × List.Tuple F xs
-
 set_option linter.unusedVariables false in
 abbrev Var (T : Type u2) := Nat
 
 structure Ren (T : Type u2) where
   act : Nat -> Nat
 
+@[implicit_reducible]
+def RenVec : List (Type u2) -> Type u2
+| [] => PUnit
+| .cons x xs => Ren x × RenVec xs
+
 class RenMap (S : Type u1) (V : List (Type u2)) where
-  rmap : List.Tuple Ren V -> S -> S
+  rmap : RenVec V -> S -> S
 
 class RenMapAll (V : List (Type u2)) where
   rmap : ∀ (i : Fin V.length), RenMap V[i] [V[i]]
@@ -65,7 +65,7 @@ elab_rules <= expected
   let elems_stx <- form_prod elems.reverse
   let stx : TermElabM Lean.Syntax := `(@rmap _ $list_ann _ $elems_stx $t)
   let stx <- stx
-  elabTerm stx expected
+  elabTermAndSynthesize stx expected
 
 @[app_unexpander rmap]
 def unexpand_rmap : Lean.PrettyPrinter.Unexpander
@@ -85,6 +85,11 @@ export Action (re su)
 structure Subst (T : Type u2) where
   inner : Nat -> Action T
 
+@[implicit_reducible]
+def SubstVec : List (Type u2) -> Type u2
+| [] => PUnit
+| .cons x xs => Subst x × SubstVec xs
+
 class SubstAction (T : Type u1) (A : Type u2) (U : outParam (Type u3)) where
   act (σ : Subst T) : A -> U
 
@@ -94,7 +99,7 @@ instance : SubstAction T Nat (Action T) where
   act := Subst.inner
 
 class SubstMap (S : Type u1) (V : List (Type u2)) where
-  smap : List.Tuple Subst V -> S -> S
+  smap : SubstVec V -> S -> S
 
 class SubstMapAll (V : List (Type u2)) where
   smap : ∀ (i : Fin V.length), SubstMap V[i] [V[i]]
@@ -115,7 +120,7 @@ elab_rules <= expected
   let elems_stx <- form_prod elems.reverse
   let stx : TermElabM Lean.Syntax := `(@smap _ $list_ann _ $elems_stx $t)
   let stx <- stx
-  elabTerm stx expected
+  elabTermAndSynthesize stx expected
 
 @[app_unexpander smap]
 def unexpand_smap : Lean.PrettyPrinter.Unexpander

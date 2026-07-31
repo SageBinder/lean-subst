@@ -82,19 +82,19 @@ instance : SubstMap Term [Term] where
   smap σ := Term.smap σ.1
 
 @[simp, grind =]
-theorem Term.smap_var {x} {σ : Subst Term} : (#x)[σ] = from_action (σ.act x) := by
+theorem Term.smap_var {x} {σ : SubstVec [Term]} : (#x)[σ,] = from_action (σ.1.act x) := by
   simp [SubstMap.smap]
 
 @[simp, grind =]
-theorem Term.smap_app {t1 t2 : Term} {σ : Subst Term} : (app t1 t2)[σ] = app t1[σ] t2[σ] := by
+theorem Term.smap_app {t1 t2 : Term} {σ : SubstVec [Term]} : (app t1 t2)[σ,] = app t1[σ,] t2[σ,] := by
   simp +instances [SubstMap.smap]
 
 @[simp, grind =]
-theorem Term.smap_lam {A t} {σ : Subst Term} : (λ[A] t)[σ] = λ[A] t[σ.lift] := by
-  simp [SubstMap.smap]
+theorem Term.smap_lam {A t} {σ : SubstVec [Term]} : (λ[A] t)[σ,] = λ[A] t[σ.lift,] := by
+  simp [-Subst.rewrite_lift, SubstMap.smap]; sorry
 
 instance : SubstMapId Term [Term] where
-  apply_id := by subst_solve_id
+  apply_id := by sorry
 
 instance : SubstMapStable Term [Term] where
   apply_stable := by sorry
@@ -109,7 +109,9 @@ instance : SubstMapCompose Term [Term] where
   apply_compose := by
     intro s σ τ
     induction s generalizing σ τ
-    all_goals sorry
+    case var => sorry
+    case app => simp [*]
+    case lam => sorry
     -- any_goals solve | simp_all +instances [List.Tuple]
     -- try any_goals solve | (
     --   try simp_all +instances [List.Tuple]

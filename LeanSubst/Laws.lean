@@ -172,7 +172,7 @@ namespace Subst
     simp [HAndThen.hAndThen, AndThen.andThen, compose, act, SubstAction.act]
     funext; case _ x =>
     cases σ.inner x <;> simp [act, SubstAction.act]
-    simp [HAndThen.hAndThen, AndThen.andThen, compose_tuple, compose, act, SubstAction.act]
+    simp [HAndThen.hAndThen, AndThen.andThen, SubstVec.compose, compose, act, SubstAction.act]
     congr
 
   @[simp]
@@ -524,7 +524,7 @@ theorem Subst.lift_compose_ren_right_k1
 := by
   simp [lift, act, SubstAction.act]; congr; funext; case _ x =>
   cases x <;> simp [act, SubstAction.act]; case _ x =>
-  simp [HAndThen.hAndThen, AndThen.andThen, compose_ren_right, Ren.compose_tuple, act, SubstAction.act]
+  simp [HAndThen.hAndThen, AndThen.andThen, compose_ren_right, RenVec.compose, act, SubstAction.act]
   congr 1
 
 @[simp]
@@ -550,7 +550,7 @@ theorem Subst.rewrite_lift_compose_k1
   cases x <;> simp [act, SubstAction.act]
   case _ x =>
   cases σ.inner x <;> simp [act, SubstAction.act]; case _ t =>
-  simp [HAndThen.hAndThen, compose_ren_right_tuple, compose_ren_left_tuple]; congr
+  simp [HAndThen.hAndThen, SubstVec.compose_ren_right, SubstVec.compose_ren_left]; congr
 
 @[simp]
 theorem Subst.rewrite_lift_compose

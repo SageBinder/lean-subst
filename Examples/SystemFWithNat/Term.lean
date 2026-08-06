@@ -80,17 +80,31 @@ instance : RenMap Term [Ty] where
   rmap r := Term.rmap (Ren.id Term, r.1, .unit)
 
 @[simp]
-def Term.smap (σ : Subst Term) (τ : Subst Ty) : Term -> Term
-| var x => σ.act x
-| app t1 t2 => app (t1.smap σ τ) (t2.smap σ τ)
-| lam A t => lam A[τ] (t.smap σ.lift τ)
-| tapp t A => tapp (t.smap σ τ) A[τ]
+def Term.smap (σ : SubstVec [Term, Ty]) : Term -> Term
+| var x => σ.1.act x
+| app t1 t2 => app (t1.smap σ) (t2.smap σ)
+| lam A t => lam A[σ.2.1] (t.smap $ σ.lift [1, 0])
+| tapp t A => tapp (t.smap σ) A[σ.2.1]
 -- Because `Term` has `Ty` variables, we have to increment `Ty` variables in `σ` by 1
 --                       v-------v
+| tlam t => tlam (t.smap $ SubstVec.rmap (𝐫1(Ty), PUnit.unit) Term 0 rfl (σ.lift [0, 1]))
 | tlam t => tlam (t.smap σ⟨𝐫1(Ty)⟩ τ.lift)
 | zero => zero
 | succ t => succ (t.smap σ τ)
 | nrec motive z s n => nrec motive[τ] (z.smap σ τ) (s.smap (σ.lift 2) τ) (n.smap σ τ)
+
+-- @[simp]
+-- def Term.smap (σ : Subst Term) (τ : Subst Ty) : Term -> Term
+-- | var x => σ.act x
+-- | app t1 t2 => app (t1.smap σ τ) (t2.smap σ τ)
+-- | lam A t => lam A[τ] (t.smap σ.lift τ)
+-- | tapp t A => tapp (t.smap σ τ) A[τ]
+-- -- Because `Term` has `Ty` variables, we have to increment `Ty` variables in `σ` by 1
+-- --                       v-------v
+-- | tlam t => tlam (t.smap σ⟨𝐫1(Ty)⟩ τ.lift)
+-- | zero => zero
+-- | succ t => succ (t.smap σ τ)
+-- | nrec motive z s n => nrec motive[τ] (z.smap σ τ) (s.smap (σ.lift 2) τ) (n.smap σ τ)
 
 
 end SystemFWithNat

@@ -151,6 +151,20 @@ def Subst.rmap [RenMap S V] (r : RenVec V) (σ : Subst S) : Subst S := .mk λ n 
 instance [RenMap S V] : RenMap (Subst S) V where
   rmap := Subst.rmap
 
+def SubstVec.rmap (r : RenVec V) (A : Type u2) [RenMap A V] : {S : List (Type u2)} -> (n : Nat) -> (S[n]? = some A) -> SubstVec S -> SubstVec S
+| .nil, _, _, _ => .unit
+| .cons x xs, 0, h, (σ, σs) => by simp at h; subst h; exact (σ⟨r,⟩, σs)
+| .cons x xs, n + 1, h, (σ, σs) =>
+  have h' : xs[n]? = some A := by simp at h; exact h
+  (σ, rmap r A n h' σs)
+
+-- def SubstVec.rmap (r : RenVec V) : {S : List (Type u2)} -> (i : Fin S.length) -> [RenMap S[i] V] -> SubstVec S -> SubstVec S
+-- | .nil, _, _ , _ => .unit
+-- | .cons x xs, i, j, (σ, σs) => by
+--   cases i using Fin.cases with
+--   | zero => simp at j; exact (σ⟨r,⟩, σs)
+--   | succ i => simp at j; exact (σ, rmap r i σs)
+
 def Subst.smap [SubstMap S V] (τ : SubstVec V) (σ : Subst S) : Subst S := .mk λ n => (σ.act n)[τ,]
 
 instance [SubstMap S V] : SubstMap (Subst S) V where
@@ -579,9 +593,10 @@ theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 >> r2).lift k = r1.lift k >> 
 def Subst.lift [RenMap T [T]] (σ : Subst T) (k : Nat := 1) : Subst T := .mk λ n =>
   if n < k then re n else (σ.act (n - k))⟨Ren.add T k⟩
 
-def SubstVec.lift : {V : List (Type u2)} -> [RenMapAll V] -> (σ : SubstVec V) -> (k : Nat := 1) -> SubstVec V
+def SubstVec.lift : {V : List (Type u2)} -> [RenMapAll V] -> (σ : SubstVec V) -> List Nat -> SubstVec V
 | [], _, _, _ => .unit
-| .cons _ _, _, (t, ts), k => (t.lift k, ts.lift k)
+| .cons _ _, _, (t, ts), [] => (t, ts)
+| .cons _ _, _, (t, ts), .cons k ks => (t.lift k, ts.lift ks)
 
 @[simp, grind <-]
 theorem Subst.lift_action_lt [RenMap T [T]] {σ : Subst T} {k i} (h : i < k)

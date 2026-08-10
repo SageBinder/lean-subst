@@ -8,6 +8,53 @@ variable {S : Type u1} {T T1 T2 : Type u2} {U : Type u3}
 variable {V : List (Type u2)}
 
 ----------------------------------------------------------------------------------------------------
+---- RenVec & SubstVec; Map & GetElem
+----------------------------------------------------------------------------------------------------
+inductive Subst.TupleMap (F : Type u2 -> Type u2) : List (Type u2) -> Type _ where
+| nil : Subst.TupleMap F []
+| cons {T Ts} : F T -> Subst.TupleMap F Ts -> Subst.TupleMap F (T::Ts)
+
+syntax (name := «term𝐭[_,]») "𝐭[" withoutPosition(term,*,?) "]" : term
+open Lean in
+macro_rules
+| `(𝐭[ $elems,* ]) => do
+  let rec expand_tuple_lit (i : Nat) (skip : Bool) (result : TSyntax `term) : MacroM Syntax := do
+    match i, skip with
+    | 0,     _     => pure result
+    | i + 1, true  => expand_tuple_lit i false result
+    | i + 1, false =>
+      expand_tuple_lit i true (<- ``(Subst.TupleMap.cons $(⟨elems.elemsAndSeps[i]!⟩) $result))
+  let size := elems.elemsAndSeps.size
+  expand_tuple_lit size (size % 2 == 0) (<- ``(Subst.TupleMap.nil))
+
+def RenVec.map
+  : {V : List (Type u2)} -> Subst.TupleMap (λ T => Ren T -> Ren T) V -> RenVec V -> RenVec V
+| [], .nil, r => r
+| .cons _ _, .cons f fs, (r, rs) => (f r, rs.map fs)
+
+def SubstVec.map
+  : {V : List (Type u2)} -> Subst.TupleMap (λ T => Subst T -> Subst T) V -> SubstVec V -> SubstVec V
+| [], .nil, r => r
+| .cons _ _, .cons f fs, (σ, σs) => (f σ, σs.map fs)
+
+@[implicit_reducible]
+def List.getp {A} : (ℓ : List A) -> (n : Nat) -> (h : n < ℓ.length := by grind) -> A
+| .cons x xs, 0, _ => x
+| .cons x xs, n + 1, _ => List.getp xs n
+
+def RenVec.get
+  : {V : List (Type u2)} -> (n : Nat) -> (h : n < V.length := by grind) ->
+    RenVec V -> Ren (List.getp V n)
+| .cons _ _, 0, _, (σ, _) => σ
+| .cons _ _, n + 1, _, (_, σs) => σs.get n
+
+def SubstVec.get
+  : {V : List (Type u2)} -> (n : Nat) -> (h : n < V.length := by grind) ->
+    SubstVec V -> Subst (List.getp V n)
+| .cons _ _, 0, _, (σ, _) => σ
+| .cons _ _, n + 1, _, (_, σs) => σs.get n
+
+----------------------------------------------------------------------------------------------------
 ---- RenMapAll & SubstMapAll
 ----------------------------------------------------------------------------------------------------
 set_option synthInstance.checkSynthOrder false in

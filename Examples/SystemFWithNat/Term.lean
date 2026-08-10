@@ -58,17 +58,16 @@ theorem Term.from_action_su {t} : from_action (su t) = t := by simp [from_action
 instance : Coe (Action Term) Term where
   coe := Term.from_action
 
--- Defining the rmap/smap using the Tuple form might make more sense for a macro, dunno
 @[simp]
 def Term.rmap (r : RenVec [Term, Ty]) : Term -> Term
-| var x => var (r.1.act x)
+| var x => var ((r.get 0).act x)
 | app t1 t2 => app (t1.rmap r) (t2.rmap r)
-| lam A t => lam A⟨r.2.1⟩ (t.rmap $ r.lift [1, 0])
-| tapp t A => tapp (t.rmap r) A⟨r.2.1⟩
-| tlam t => tlam (t.rmap $ r.lift [0, 1])
+| lam A t => lam A⟨r.get 1⟩ (t.rmap $ r.map 𝐭[.lift, id])
+| tapp t A => tapp (t.rmap r) A⟨r.get 1⟩
+| tlam t => tlam (t.rmap $ r.map 𝐭[id, .lift])
 | zero => zero
 | succ t => succ (t.rmap r)
-| nrec motive z s n => nrec motive⟨r.2.1⟩ (z.rmap r) (s.rmap $ r.lift [2, 0]) (n.rmap r)
+| nrec motive z s n => nrec motive⟨r.get 1⟩ (z.rmap r) (s.rmap $ r.map 𝐭[.lift (k := 2), id]) (n.rmap r)
 
 instance : RenMap Term [Term, Ty] where
   rmap := Term.rmap
@@ -80,6 +79,7 @@ instance : RenMap Term [Ty] where
   rmap r := Term.rmap (Ren.id Term, r.1, .unit)
 
 @[simp]
+<<<<<<< HEAD
 def Term.smap (σ : Subst Term) (τ : Subst Ty) : Term -> Term
 | var x => σ.act x
 | app t1 t2 => app (t1.smap σ τ) (t2.smap σ τ)
@@ -88,9 +88,17 @@ def Term.smap (σ : Subst Term) (τ : Subst Ty) : Term -> Term
 -- Because `Term` has `Ty` variables, we have to increment `Ty` variables in `σ` by 1
 --                       v-------v
 | tlam t => tlam (t.smap σ⟨𝐫1(Ty)⟩ τ.lift)
+=======
+def Term.smap (σ : SubstVec [Term, Ty]) : Term -> Term
+| var x => (σ.get 0).act x
+| app t1 t2 => app (t1.smap σ) (t2.smap σ)
+| lam A t => lam A[σ.get 1] (t.smap $ σ.map 𝐭[.lift, id])
+| tapp t A => tapp (t.smap σ) A[σ.get 1]
+| tlam t => tlam (t.smap $ σ.map 𝐭[(·⟨𝐫1(Ty)⟩), .lift])
+>>>>>>> 1b92a1e (add map and get for vec)
 | zero => zero
-| succ t => succ (t.smap σ τ)
-| nrec motive z s n => nrec motive[τ] (z.smap σ τ) (s.smap (σ.lift 2) τ) (n.smap σ τ)
+| succ t => succ (t.smap σ)
+| nrec motive z s n => nrec motive[σ.get 1] (z.smap σ) (s.smap $ σ.map 𝐭[.lift (k := 2), id]) (n.smap σ)
 
 
 end SystemFWithNat

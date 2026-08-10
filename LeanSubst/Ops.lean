@@ -37,7 +37,7 @@ def SubstVec.map
 | [], .nil, r => r
 | .cons _ _, .cons f fs, (σ, σs) => (f σ, σs.map fs)
 
-@[implicit_reducible]
+@[instance_reducible]
 def List.getp {A} : (ℓ : List A) -> (n : Nat) -> (h : n < ℓ.length := by grind) -> A
 | .cons x xs, 0, _ => x
 | .cons x xs, n + 1, _ => List.getp xs n

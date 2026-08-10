@@ -79,23 +79,12 @@ instance : RenMap Term [Ty] where
   rmap r := Term.rmap (Ren.id Term, r.1, .unit)
 
 @[simp]
-<<<<<<< HEAD
-def Term.smap (σ : Subst Term) (τ : Subst Ty) : Term -> Term
-| var x => σ.act x
-| app t1 t2 => app (t1.smap σ τ) (t2.smap σ τ)
-| lam A t => lam A[τ] (t.smap σ.lift τ)
-| tapp t A => tapp (t.smap σ τ) A[τ]
--- Because `Term` has `Ty` variables, we have to increment `Ty` variables in `σ` by 1
---                       v-------v
-| tlam t => tlam (t.smap σ⟨𝐫1(Ty)⟩ τ.lift)
-=======
 def Term.smap (σ : SubstVec [Term, Ty]) : Term -> Term
 | var x => (σ.get 0).act x
 | app t1 t2 => app (t1.smap σ) (t2.smap σ)
 | lam A t => lam A[σ.get 1] (t.smap $ σ.map 𝐭[.lift, id])
 | tapp t A => tapp (t.smap σ) A[σ.get 1]
 | tlam t => tlam (t.smap $ σ.map 𝐭[(·⟨𝐫1(Ty)⟩), .lift])
->>>>>>> 1b92a1e (add map and get for vec)
 | zero => zero
 | succ t => succ (t.smap σ)
 | nrec motive z s n => nrec motive[σ.get 1] (z.smap σ) (s.smap $ σ.map 𝐭[.lift (k := 2), id]) (n.smap σ)

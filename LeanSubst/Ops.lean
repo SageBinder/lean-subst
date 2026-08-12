@@ -27,11 +27,13 @@ macro_rules
   let size := elems.elemsAndSeps.size
   expand_tuple_lit size (size % 2 == 0) (<- ``(Subst.TupleMap.nil))
 
+@[simp]
 def RenVec.map
   : {V : List (Type u2)} -> Subst.TupleMap (λ T => Ren T -> Ren T) V -> RenVec V -> RenVec V
 | [], .nil, r => r
 | .cons _ _, .cons f fs, (r, rs) => (f r, rs.map fs)
 
+@[simp]
 def SubstVec.map
   : {V : List (Type u2)} -> Subst.TupleMap (λ T => Subst T -> Subst T) V -> SubstVec V -> SubstVec V
 | [], .nil, r => r

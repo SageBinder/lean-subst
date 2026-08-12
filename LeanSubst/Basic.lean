@@ -1,6 +1,5 @@
 
 import Lean.Elab.Term
-import Lean.Meta
 import Lean.Elab.SyntheticMVars
 
 namespace LeanSubst
@@ -32,6 +31,9 @@ namespace Subst.Syntax
     | .app _ ty => pure ty
     | _ => Lean.Elab.throwUnsupportedSyntax
 end Subst.Syntax
+
+@[reducible]
+def Subst.typeof {T : Type u2} (_ : T) : Type u2 := T
 
 set_option linter.unusedVariables false in
 abbrev Var (T : Type u2) := Nat

@@ -37,23 +37,27 @@ def SubstVec.map
 | [], .nil, r => r
 | .cons _ _, .cons f fs, (σ, σs) => (f σ, σs.map fs)
 
-@[instance_reducible]
-def List.getp {A} : (ℓ : List A) -> (n : Nat) -> (h : n < ℓ.length := by grind) -> A
-| .cons x xs, 0, _ => x
-| .cons x xs, n + 1, _ => List.getp xs n
-
+@[simp]
 def RenVec.get
-  : {V : List (Type u2)} -> (n : Nat) -> (h : n < V.length := by grind) ->
-    RenVec V -> Ren (List.getp V n)
-| .cons _ _, 0, _, (σ, _) => σ
-| .cons _ _, n + 1, _, (_, σs) => σs.get n
+  : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
+    (h : V[n]? = some A := by grind) ->
+    RenVec V -> Ren A
+| .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
+| .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
 
+-- @[simp]
+-- theorem RenVec.get1_0 {r : RenVec [T1]} : r.get 0 = r.1 := sorry
+
+@[simp]
 def SubstVec.get
-  : {V : List (Type u2)} -> (n : Nat) -> (h : n < V.length := by grind) ->
-    SubstVec V -> Subst (List.getp V n)
-| .cons _ _, 0, _, (σ, _) => σ
-| .cons _ _, n + 1, _, (_, σs) => σs.get n
+  : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
+    (h : V[n]? = some A := by grind) ->
+    SubstVec V -> Subst A
+| .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
+| .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
 
+-- @[simp]
+-- theorem SubstVec.get1_0 {r : SubstVec [T1]} : r.get 0 = r.1 := sorry
 ----------------------------------------------------------------------------------------------------
 ---- RenMapAll & SubstMapAll
 ----------------------------------------------------------------------------------------------------
@@ -96,7 +100,6 @@ instance [i1 : SubstMap T1 [T1]] [i2 : SubstMap T2 [T2]] : SubstMapAll [T1, T2] 
       cases i using Fin.cases with
       | zero => exact i2
       | succ i => apply Fin.elim0 i
-
 ----------------------------------------------------------------------------------------------------
 ---- Var
 ----------------------------------------------------------------------------------------------------
@@ -213,9 +216,9 @@ notation "𝐫0(" T ")" => Ren.id T
 theorem Ren.id_action {x} : 𝐫0(T).act x = x := by simp [id]
 
 @[simp]
-def Ren.ids : (V : List (Type u2)) -> RenVec V
+def RenVec.id : (V : List (Type u2)) -> RenVec V
 | [] => .unit
-| .cons x xs => (id x, ids xs)
+| .cons x xs => (.id x, id xs)
 
 def Subst.id T : Subst T := ⟨λ x => re x⟩
 notation "𝐬0" => Subst.id _
@@ -225,9 +228,9 @@ notation "𝐬0(" T ")" => Subst.id T
 theorem Subst.id_action {x} : 𝐬0(T).act x = re x := by simp [id, act, SubstAction.act]
 
 @[simp]
-def Subst.ids : (V : List (Type u2)) -> SubstVec V
+def SubstVec.id : (V : List (Type u2)) -> SubstVec V
 | [] => .unit
-| .cons x xs => (id x, ids xs)
+| .cons x xs => (.id x, id xs)
 ----------------------------------------------------------------------------------------------------
 ---- Successor
 ----------------------------------------------------------------------------------------------------
@@ -449,6 +452,11 @@ instance : AndThen (RenVec V) where
   andThen r f := RenVec.compose r (f ())
 
 @[simp]
+theorem RenVec.compose_get [RenMapAll V] {σ τ : RenVec V} {i} {h}
+  : (σ >> τ).get T i h = σ.get T i h >> τ.get T i h
+:= sorry
+
+@[simp]
 theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 >> r2).act x = r2.act (r1.act x) := by
   simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
@@ -555,6 +563,39 @@ theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T}
   : (σ >> r).act x = (σ.act x)⟨r⟩
 := by simp [HAndThen.hAndThen, compose_ren_right, act, SubstAction.act]
 
+set_option linter.unusedVariables false in
+@[instance_reducible]
+def RenMapAll.get (T : Type u2) :
+  ∀ (i : Nat) {V : List (Type u2)} (h : V[i]? = some T), RenMapAll V -> RenMap T [T]
+| i, V, h, ⟨inst⟩ =>
+  let i' : Fin V.length := ⟨i, by grind⟩
+  inst i' |> cast (by grind)
+
+set_option linter.unusedVariables false in
+@[instance_reducible]
+def SubstMapAll.get (T : Type u2) :
+  ∀ (i : Nat) {V : List (Type u2)} (h : V[i]? = some T), SubstMapAll V -> SubstMap T [T]
+| i, V, h, ⟨inst⟩ =>
+  let i' : Fin V.length := ⟨i, by grind⟩
+  inst i' |> cast (by grind)
+
+@[simp]
+theorem SubstVec.compose_ren_left_get {r : RenVec V} {σ : SubstVec V} {i h}
+  : (r >> σ).get T i h = r.get T i h >> σ.get T i h
+:= sorry
+
+@[simp]
+theorem SubstVec.compose_ren_right_get [inst : RenMapAll V] {σ : SubstVec V} {r : RenVec V} {i h}
+  : (σ >> r).get T i h
+    = let : RenMap T [T] := inst.get T i h; σ.get T i h >> r.get T i h
+:= sorry
+
+@[simp]
+theorem SubstVec.compose_get [inst : SubstMapAll V] {σ τ : SubstVec V} {i h}
+  : (σ >> τ).get T i h
+    = let : SubstMap T [T] := inst.get T i h; σ.get T i h >> τ.get T i h
+:= sorry
+
 -- def Subst.hcompose [SubstMap S T] : Subst S -> Subst T -> Subst S
 -- | σ, τ => .mk λ n => (σ.act n)[τ]
 -- infixr:85 " ◾ " => Subst.hcompose
@@ -579,6 +620,7 @@ theorem Subst.compose_ren_right_action [RenMap T [T]] {σ : Subst T} {r : Ren T}
 def Ren.lift (r : Ren T) (k : Nat := 1) : Ren T := .mk λ n =>
   if n < k then n else r.act (n - k) + k
 
+@[simp]
 def RenVec.lift : {V : List (Type u2)} -> RenVec V -> List Nat -> RenVec V
 | [], _, _ => .unit
 | .cons _ _, (t, ts), [] => (t, ts)
@@ -623,12 +665,18 @@ theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 >> r2).lift k = r1.lift k >> 
     rw [lift_of_succ (r := r2)]
     rw [lift_compose1]
 
+@[simp]
+theorem RenVec.lift_compose {k} {r1 r2 : RenVec V} : (r1 >> r2).lift k = r1.lift k >> r2.lift k := by
+  sorry
+
 def Subst.lift [RenMap T [T]] (σ : Subst T) (k : Nat := 1) : Subst T := .mk λ n =>
   if n < k then re n else (σ.act (n - k))⟨Ren.add T k⟩
 
-def SubstVec.lift : {V : List (Type u2)} -> [RenMapAll V] -> (σ : SubstVec V) -> (k : Nat := 1) -> SubstVec V
+@[simp]
+def SubstVec.lift : {V : List (Type u2)} -> [RenMapAll V] -> SubstVec V -> List Nat -> SubstVec V
 | [], _, _, _ => .unit
-| .cons _ _, _, (t, ts), k => (t.lift k, ts.lift k)
+| .cons _ _, _, (t, ts), [] => (t, ts)
+| .cons _ _, _, (t, ts), (.cons k ks) => (t.lift k, ts.lift ks)
 
 @[simp, grind <-]
 theorem Subst.lift_action_lt [RenMap T [T]] {σ : Subst T} {k i} (h : i < k)

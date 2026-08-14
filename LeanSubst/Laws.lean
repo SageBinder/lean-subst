@@ -586,4 +586,12 @@ theorem Subst.rewrite_lift_compose_vec
   : (σ >> τ).lift k = σ.lift k >> τ.lift k
 := sorry
 
+theorem Subst.compose_ren_left_vec_map_commute
+  [RenMap T V] [SubstMap T V] [RenMapAll V] [SubstMapAll V]
+  [RenMapId T V] [RenMapCompose T V]
+  [SubstMapRenComposeLeft T V] [SubstMapRenComposeRight T V]
+  {σ τ : SubstVec V} {f : TupleMap (λ T => Subst T -> Subst T) V}
+  : (σ >> τ).map f = σ.map f >> τ.map f
+:= sorry
+
 end LeanSubst

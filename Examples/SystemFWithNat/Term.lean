@@ -233,25 +233,7 @@ instance : RenMapId Term [Term, Ty] where
   apply_id := by subst_solve_id
 
 instance : RenMapCompose Term [Term, Ty] where
-  apply_compose := by
-    intro s σ τ
-    let T := Subst.typeof s
-    induction s generalizing σ τ
-    all_goals
-      try solve | simp; grind
-      try solve | simp [*]
-      try simp [Subst.lift_compose_ren_right_vec (T := T), *]
-      try simp [Subst.rewrite_lift_compose_ren_left_vec (T := T), *]
-      try simp [Subst.rewrite_lift_compose_vec (T := T), *]
-    case lam =>
-      simp [*]
-      sorry
-    case tapp =>
-      simp [*]
-      sorry
-    case nrec =>
-      simp [*]
-      sorry
+  apply_compose := by subst_solve_compose
 
 instance : RenMapId Term [Term] where
   apply_id := sorry
@@ -281,10 +263,10 @@ instance : SubstMap Term [Term, Ty] where
   smap := Term.smap
 
 instance : SubstMap Term [Term] where
-  smap r := Term.smap (r.1, Subst.id Ty, .unit)
+  smap σ := Term.smap (σ.get Term 0, Subst.id Ty, .unit)
 
 instance : SubstMap Term [Ty] where
-  smap r := Term.smap (Subst.id Term, r.1, .unit)
+  smap σ := Term.smap (Subst.id Term, σ.get Ty 0, .unit)
 
 @[simp]
 theorem Term.smap_var {x} {σ : SubstVec [Term, Ty]} : (var x)[σ,] = (σ.get Term 0).act x := by
@@ -325,20 +307,58 @@ theorem Term.smap_nrec {m z s n} {σ : SubstVec [Term, Ty]}
 @[simp]
 theorem Subst.test2 {T V} [RenMap T V] (r : RenVec V) : (Subst.id T)⟨r,⟩ = Subst.id T := sorry
 
+@[simp]
+theorem Term.from_action_smap {t : Action Term} {σ : SubstVec [Term]}
+  : (from_action t)[σ,] = from_action t[σ,]
+:= by
+  sorry
+
 instance : SubstMapId Term [Term, Ty] where
   apply_id := by subst_solve_id
 
 instance : SubstMapStable Term [Term, Ty] where
   apply_stable := by sorry
 
+@[simp]
+theorem Term.apply_ren_compose_left {s : Term} {r : RenVec [Term, Ty]} {τ : SubstVec [Term, Ty]}
+  : smap τ (rmap r s) = smap (r >> τ) s
+:= by
+  sorry
+
 instance : SubstMapRenComposeLeft Term [Term, Ty] where
-  apply_ren_compose_left := by sorry
+  apply_ren_compose_left := by intro s σ τ; simp [SubstMap.smap, RenMap.rmap]; try rfl
 
 instance : SubstMapRenComposeRight Term [Term, Ty] where
   apply_ren_compose_right := by sorry
 
+@[simp]
+theorem Term.apply_compose
+  : ∀ s σ τ, smap τ (smap σ s) = smap (σ >> τ) s
+:= by
+  intro s σ τ
+  let T := Subst.typeof s
+  induction s generalizing σ τ
+  all_goals
+    try solve | simp; grind
+    try solve | simp [*]
+    try simp [Subst.lift_compose_ren_right_vec (T := T), *]
+    try simp [Subst.rewrite_lift_compose_ren_left_vec (T := T), *]
+    try simp [Subst.rewrite_lift_compose_vec (T := T), *]
+    try simp [Subst.compose_ren_left_vec_map_commute (T := T), *]
+    try rfl
+  case var =>
+    rcases σ with ⟨σ1, σ2, u1⟩
+    rcases τ with ⟨τ1, τ2, u2⟩
+    cases u1; cases u2; case _ x =>
+    simp; generalize zdef : σ1.act x = z
+    cases z <;> simp; case _ t =>
+    unfold SubstMap.smap
+    simp [SubstMapAll.get, SubstMapAll.smap]
+    unfold instSubstMapTermConsNil; simp
+    sorry
+
 instance : SubstMapCompose Term [Term, Ty] where
-  apply_compose := by sorry
+  apply_compose := by intro s σ τ; simp [SubstMap.smap]; try rfl
 
 instance : SubstMapId Term [Term] where
   apply_id := by sorry
@@ -353,7 +373,7 @@ instance : SubstMapRenComposeRight Term [Term] where
   apply_ren_compose_right := by sorry
 
 instance : SubstMapCompose Term [Term] where
-  apply_compose := by sorry
+  apply_compose := by intro s σ τ; simp [SubstMap.smap]; try rfl
 
 instance : SubstMapId Term [Ty] where
   apply_id := by sorry
@@ -368,6 +388,6 @@ instance : SubstMapRenComposeRight Term [Ty] where
   apply_ren_compose_right := by sorry
 
 instance : SubstMapCompose Term [Ty] where
-  apply_compose := by sorry
+  apply_compose := by intro s σ τ; simp [SubstMap.smap]; try rfl
 
 end SystemFWithNat

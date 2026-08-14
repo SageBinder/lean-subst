@@ -41,7 +41,7 @@ abbrev Var (T : Type u2) := Nat
 structure Ren (T : Type u2) : Type u2 where
   act : Nat -> Nat
 
-@[implicit_reducible]
+@[instance_reducible]
 def RenVec : List (Type u2) -> Type u2
 | [] => PUnit
 | .cons x xs => Ren x × RenVec xs
@@ -105,7 +105,7 @@ export Action (re su)
 structure Subst (T : Type u2) where
   inner : Nat -> Action T
 
-@[implicit_reducible]
+@[instance_reducible]
 def SubstVec : List (Type u2) -> Type u2
 | [] => PUnit
 | .cons x xs => Subst x × SubstVec xs

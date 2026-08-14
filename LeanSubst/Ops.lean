@@ -500,7 +500,7 @@ def SubstVec.compose
   : {V : List (Type u2)} -> [SubstMapAll V] ->
     SubstVec V -> SubstVec V -> SubstVec V
 | [], _, _, _ => .unit
-| .cons _ _, _, (v1, v1s), (v2, v2s) => (v1 >> v2, compose v1s v2s)
+| .cons _ _, _, (v1, v1s), (v2, v2s) => (⟨λ n => ((v1 >> v2).act n)[v2s,]⟩, compose v1s v2s)
 
 instance [SubstMapAll V] : AndThen (SubstVec V) where
   andThen σ f := SubstVec.compose σ (f ())

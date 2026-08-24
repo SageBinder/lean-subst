@@ -17,6 +17,11 @@ theorem Ren.lift_eq_from_eq [RenMap T [T]] {r : Ren T} {σ : Subst T}
 := by intro h; rw [<-h]
 
 namespace Subst
+  @[simp]
+  theorem id_rmap {T V} [RenMap T V] [RenSuffix T V] (r : RenVec V)
+    : (Subst.id T)⟨r,⟩ = Subst.id T
+  := by simp [RenMap.rmap, Subst.rmap1, Subst.id]
+
   section
     @[simp]
     theorem rewrite0 [RenMap T [T]] : 𝐬0(T) >> 𝐫1(T) = 𝐬1 := by

@@ -4,19 +4,6 @@ open LeanSubst
 
 namespace SystemFWithNat
 
-universe u2
-
-@[simp]
-theorem Subst.test {T n} : n :: Ren.add T (n + 1) = Ren.add T n := by
-  induction n; simp
-  simp [Ren.add, Ren.cons] at *
-  funext; case _ i =>
-  cases i <;> simp; omega
-
-@[simp]
-theorem Subst.test2 {T V} [RenMap T V] [RenSuffix T V] (r : RenVec V) : (Subst.id T)⟨r,⟩ = Subst.id T := by
-  simp [RenMap.rmap, Subst.rmap1, Subst.id]
-
 inductive Ty where
 | var : Nat -> Ty
 | arrow : Ty -> Ty -> Ty
@@ -335,7 +322,7 @@ instance instRenMapAll_Term : RenMapAll [Term] := .cons .nil
 instance instRenMapAll_Term_Ty : RenMapAll [Term, Ty] := .cons instRenMapAll_Ty
 
 instance : RenMapVecDef Term Term [Ty] where
-  apply_vecdef := sorry
+  apply_vecdef := by intro s r; induction s generalizing r <;> simp [*]
 
 instance : RenMapId Term [Term, Ty] where
   apply_id := by subst_solve_id
@@ -344,7 +331,7 @@ instance : RenMapCompose Term [Term, Ty] where
   apply_compose := by subst_solve_compose
 
 instance : RenMapVecDef Term Term [] where
-  apply_vecdef := sorry
+  apply_vecdef := by intro s r; induction s generalizing r <;> simp [*]
 
 instance : RenMapId Term [Term] where
   apply_id := by subst_solve_id
@@ -516,7 +503,7 @@ theorem Term.from_action_smap2 {t : Action Term} {σ : SubstVec [Ty]}
 := by cases t <;> simp [from_action]
 
 instance : SubstMapVecDef Term Term [Ty] where
-  apply_vecdef := sorry
+  apply_vecdef := by intro s σ; induction s generalizing σ <;> simp [*]
 
 instance : SubstMapId Term [Term, Ty] where
   apply_id := by subst_solve_id
@@ -534,7 +521,7 @@ instance : SubstMapCompose Term [Term, Ty] where
   apply_compose := by subst_solve_compose
 
 instance : SubstMapVecDef Term Term [] where
-  apply_vecdef := sorry
+  apply_vecdef := by intro s σ; induction s generalizing σ <;> simp [*]
 
 instance : SubstMapId Term [Term] where
   apply_id := by subst_solve_id

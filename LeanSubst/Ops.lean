@@ -433,6 +433,13 @@ theorem Ren.cons_action0 {a} {r : Ren T} : (a::r).act 0 = a := by simp [cons]
 @[simp]
 theorem Ren.cons_action {a i} {r : Ren T} : (a::r).act (i + 1) = r.act i := by simp [cons]
 
+@[simp]
+theorem Ren.cons_add {T n} : n :: add T (n + 1) = add T n := by
+  induction n <;> simp [id, succ, cons, *]
+  case zero => grind
+  case succ n ih =>
+    simp [add] at *; grind
+
 def Subst.cons (a : Action T) (σ : Subst T) : Subst T := .mk λ n =>
   match n with
   | 0 => a

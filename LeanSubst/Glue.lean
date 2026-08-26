@@ -30,19 +30,19 @@ namespace LeanSubst.Subst.Syntax
     | _ => Lean.Elab.throwUnsupportedSyntax
 end LeanSubst.Subst.Syntax
 
-@[instance_reducible]
-def List.drop' {α : Type u} : (n : Nat) → (xs : List α) → List α
-| 0, as => as
-| _ + 1, [] => []
-| n + 1, _::as => drop' n as
+-- @[instance_reducible]
+-- def List.drop' {α : Type u} : (n : Nat) → (xs : List α) → List α
+-- | 0, as => as
+-- | _ + 1, [] => []
+-- | n + 1, _::as => drop' n as
 
-@[simp, grind =]
-theorem List.drop'_nil {α i} : ([] : List α).drop' i = [] := by cases i <;> rfl
+-- @[simp, grind =]
+-- theorem List.drop'_nil {α i} : ([] : List α).drop' i = [] := by cases i <;> rfl
 
-@[simp, grind =]
-theorem List.drop'_zero {α} {l : List α} : l.drop' 0 = l := rfl
+-- @[simp, grind =]
+-- theorem List.drop'_zero {α} {l : List α} : l.drop' 0 = l := rfl
 
-@[simp, grind =]
-theorem List.drop'_succ_cons {α} {a : α} {l : List α} {i : Nat}
-  : (a :: l).drop' (i + 1) = l.drop' i
-:= rfl
+-- @[simp, grind =]
+-- theorem List.drop'_succ_cons {α} {a : α} {l : List α} {i : Nat}
+--   : (a :: l).drop' (i + 1) = l.drop' i
+-- := rfl

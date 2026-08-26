@@ -11,33 +11,35 @@ variable {V : List (Type u2)}
 ---- RenVec & SubstVec; Map & GetElem
 ----------------------------------------------------------------------------------------------------
 @[ext]
-theorem RenVec.empty_ext {a b : RenVec []} : a = b := by sorry
+theorem RenVec.empty_ext {a b : RenVec []} : a = b := by
+  cases a; cases b; rfl
 
 @[ext]
-theorem SubstVec.empty_ext {a b : SubstVec []} : a = b := by sorry
+theorem SubstVec.empty_ext {a b : SubstVec []} : a = b := by
+  cases a; cases b; rfl
 
-inductive Subst.TupleMap (F : Type u2 -> Type u2) : List (Type u2) -> Type _ where
-| nil : Subst.TupleMap F []
-| cons {T Ts} : F T -> Subst.TupleMap F Ts -> Subst.TupleMap F (T::Ts)
+-- inductive Subst.TupleMap (F : Type u2 -> Type u2) : List (Type u2) -> Type _ where
+-- | nil : Subst.TupleMap F []
+-- | cons {T Ts} : F T -> Subst.TupleMap F Ts -> Subst.TupleMap F (T::Ts)
 
-syntax (name := «term𝐭[_,]») "𝐭[" withoutPosition(term,*,?) "]" : term
-open Lean in
-macro_rules
-| `(𝐭[ $elems,* ]) => do
-  let rec expand_tuple_lit (i : Nat) (skip : Bool) (result : TSyntax `term) : MacroM Syntax := do
-    match i, skip with
-    | 0,     _     => pure result
-    | i + 1, true  => expand_tuple_lit i false result
-    | i + 1, false =>
-      expand_tuple_lit i true (<- ``(Subst.TupleMap.cons $(⟨elems.elemsAndSeps[i]!⟩) $result))
-  let size := elems.elemsAndSeps.size
-  expand_tuple_lit size (size % 2 == 0) (<- ``(Subst.TupleMap.nil))
+-- syntax (name := «term𝐭[_,]») "𝐭[" withoutPosition(term,*,?) "]" : term
+-- open Lean in
+-- macro_rules
+-- | `(𝐭[ $elems,* ]) => do
+--   let rec expand_tuple_lit (i : Nat) (skip : Bool) (result : TSyntax `term) : MacroM Syntax := do
+--     match i, skip with
+--     | 0,     _     => pure result
+--     | i + 1, true  => expand_tuple_lit i false result
+--     | i + 1, false =>
+--       expand_tuple_lit i true (<- ``(Subst.TupleMap.cons $(⟨elems.elemsAndSeps[i]!⟩) $result))
+--   let size := elems.elemsAndSeps.size
+--   expand_tuple_lit size (size % 2 == 0) (<- ``(Subst.TupleMap.nil))
 
-@[simp]
-def RenVec.map
-  : {V : List (Type u2)} -> Subst.TupleMap (λ T => Ren T -> Ren T) V -> RenVec V -> RenVec V
-| [], .nil, r => r
-| .cons _ _, .cons f fs, (r, rs) => (f r, rs.map fs)
+-- @[simp]
+-- def RenVec.map
+--   : {V : List (Type u2)} -> Subst.TupleMap (λ T => Ren T -> Ren T) V -> RenVec V -> RenVec V
+-- | [], .nil, r => r
+-- | .cons _ _, .cons f fs, (r, rs) => (f r, rs.map fs)
 
 -- @[simp]
 -- def SubstVec.map
@@ -45,33 +47,33 @@ def RenVec.map
 -- | [], .nil, r => r
 -- | .cons _ _, .cons f fs, (σ, σs) => (f σ, σs.map fs)
 
-@[simp]
-def RenVec.get
-  : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
-    (h : V[n]? = some A := by grind) ->
-    RenVec V -> Ren A
-| .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
-| .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
+-- @[simp]
+-- def RenVec.get
+--   : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
+--     (h : V[n]? = some A := by grind) ->
+--     RenVec V -> Ren A
+-- | .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
+-- | .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
 
 -- @[simp]
 -- theorem RenVec.get1_0 {r : RenVec [T1]} : r.get 0 = r.1 := sorry
 
-@[simp]
-def SubstVec.get
-  : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
-    (h : V[n]? = some A := by grind) ->
-    SubstVec V -> Subst A
-| .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
-| .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
+-- @[simp]
+-- def SubstVec.get
+--   : {V : List (Type u2)} -> (A : Type u2) -> (n : Nat) ->
+--     (h : V[n]? = some A := by grind) ->
+--     SubstVec V -> Subst A
+-- | .cons _ _, _, 0, h, (σ, _) => σ |> cast (by grind)
+-- | .cons _ _, A, n + 1, _, (_, σs) => σs.get A n
 
-@[simp]
-def SubstVec.drop : {V : List (Type u2)} -> (n : Nat) -> SubstVec V -> SubstVec (V.drop' n)
-| [], n, x => x |> cast (by simp)
-| .cons _ _, 0, x => x |> cast (by simp)
-| .cons _ _, n + 1, (_, σs) => σs.drop n
+-- @[simp]
+-- def SubstVec.drop : {V : List (Type u2)} -> (n : Nat) -> SubstVec V -> SubstVec (V.drop' n)
+-- | [], n, x => x |> cast (by simp)
+-- | .cons _ _, 0, x => x |> cast (by simp)
+-- | .cons _ _, n + 1, (_, σs) => σs.drop n
 
-@[simp]
-theorem SubstVec.drop_0 {σ : SubstVec V} : σ.drop 0 = σ := sorry
+-- @[simp]
+-- theorem SubstVec.drop_0 {σ : SubstVec V} : σ.drop 0 = σ := sorry
 
 -- @[simp]
 -- theorem SubstVec.get1_0 {r : SubstVec [T1]} : r.get 0 = r.1 := sorry
@@ -579,10 +581,10 @@ theorem RenVec.compose_proj2 {σ τ : RenVec (T::V)} : (σ >> τ).2 = σ.2 >> τ
   rcases τ with ⟨τ, τ'⟩
   simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
-@[simp]
-theorem RenVec.compose_get [RenMapAll V] {σ τ : RenVec V} {i} {h}
-  : (σ >> τ).get T i h = σ.get T i h >> τ.get T i h
-:= sorry
+-- @[simp]
+-- theorem RenVec.compose_get [RenMapAll V] {σ τ : RenVec V} {i} {h}
+--   : (σ >> τ).get T i h = σ.get T i h >> τ.get T i h
+-- := sorry
 
 @[simp]
 theorem Ren.compose_action {r1 r2 : Ren T} {x} : (r1 >> r2).act x = r2.act (r1.act x) := by
@@ -845,8 +847,29 @@ theorem Ren.lift_compose {k} {r1 r2 : Ren T} : (r1 >> r2).lift k = r1.lift k >> 
     rw [lift_compose1]
 
 @[simp]
-theorem RenVec.lift_compose {k} {r1 r2 : RenVec V} : (r1 >> r2).lift k = r1.lift k >> r2.lift k := by
-  sorry
+theorem RenVec.compose_nil : RenVec.nil >> RenVec.nil = RenVec.nil := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose]
+
+@[simp]
+theorem SubstVec.compose_ren_left_nil : RenVec.nil >> SubstVec.nil = SubstVec.nil := by
+  simp [HAndThen.hAndThen, compose_ren_left]
+
+@[simp]
+theorem SubstVec.compose_ren_right_nil : SubstVec.nil >> RenVec.nil = SubstVec.nil := by
+  simp [HAndThen.hAndThen, compose_ren_right]
+
+@[simp]
+theorem SubstVec.compose_nil : SubstVec.nil >> SubstVec.nil = SubstVec.nil := by
+  simp [HAndThen.hAndThen, AndThen.andThen, compose]
+
+@[simp]
+theorem RenVec.lift_compose :
+  ∀ {V : List (Type u2)} {k} {r1 r2 : RenVec V}, (r1 >> r2).lift k = r1.lift k >> r2.lift k
+| [], _, _, _ => by simp
+| .cons _ _, [], (r1, r1s), (r2, r2s) => by sorry
+| .cons _ _, .cons k ks, (r1, r1s), (r2, r2s) =>
+  have ih := lift_compose (k := ks) (r1 := r1s) (r2 := r2s)
+  by sorry
 
 @[simp]
 theorem RenVec.lift_proj1 {r : RenVec (T::V)} {n k} : (r.lift (n::k)).1 = r.1.lift n := by
@@ -944,11 +967,15 @@ def RenVec.to : {V : List (Type u2)} -> (r : RenVec V) -> SubstVec V
 | [], _ => .nil
 | .cons _ _, (r, rs) => (r.to, rs.to)
 
--- @[simp]
--- theorem RenVec.to_proj1_act {r : RenVec (T::V)} {n : Nat} : r.to.1.act n =  := sorry
-
 @[simp]
-theorem RenVec.to_lift [RenMapAll V] {r : RenVec V} {k} : (r.lift k).to = r.to.lift k := sorry
+theorem RenVec.to_lift
+  : ∀ {V : List (Type u2)} [RenMapAll V] {r : RenVec V} {k}, (r.lift k).to = r.to.lift k
+| [], _, _, _ => by simp [to]
+| .cons _ _, _, (r, rs), [] => by simp [to]
+| .cons _ _, _, (r, rs), .cons k ks =>
+  have ih := to_lift (r := rs) (k := ks)
+  by simp [to, *]
+
 ----------------------------------------------------------------------------------------------------
 ---- Range
 ----------------------------------------------------------------------------------------------------

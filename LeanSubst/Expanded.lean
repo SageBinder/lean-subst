@@ -42,18 +42,6 @@ theorem SubstVec.lift_size1_0 [RenMapAll [T1]] {σ : SubstVec [T1]} : σ.lift [0
 -- theorem SubstVec.get_eta2 {σ : SubstVec [T1, T2]} : σ = (σ.get T1 0, σ.get T2 1, .nil) := sorry
 
 @[simp]
-theorem RenVec.compose_nil : RenVec.nil >> RenVec.nil = RenVec.nil := sorry
-
-@[simp]
-theorem SubstVec.compose_ren_left_nil : RenVec.nil >> SubstVec.nil = SubstVec.nil := sorry
-
-@[simp]
-theorem SubstVec.compose_ren_right_nil : SubstVec.nil >> RenVec.nil = SubstVec.nil := sorry
-
-@[simp]
-theorem SubstVec.compose_nil : SubstVec.nil >> SubstVec.nil = SubstVec.nil := sorry
-
-@[simp]
 theorem RenVec.compose_components1 {r1 k1 : Ren T1}
   : HAndThen.hAndThen (α := RenVec [T1]) (β := RenVec [T1])
     (r1, .nil) (λ _ => (k1, .nil))

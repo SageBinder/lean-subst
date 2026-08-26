@@ -401,44 +401,9 @@ theorem Term.smap_term_ty_nrec {m z s n} {σ : SubstVec [Term, Ty]}
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
 @[simp]
-instance : SubstMap Term [Term] where
-  smap σ := Term.smap (σ.1, Subst.id Ty, .nil)
-
-@[simp]
-theorem Term.smap_term_var {x} {σ : SubstVec [Term]} : (var x)[σ,] = σ.1.act x := by
-  simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_app {t1 t2} {σ : SubstVec [Term]} : (app t1 t2)[σ,] = app t1[σ,] t2[σ,] := by
-  simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_lam {A t} {σ : SubstVec [Term]}
-  : (lam A t)[σ,] = lam A t[σ.lift [1],]
-:= by simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_tapp {t1 t2} {σ : SubstVec [Term]}
-  : (tapp t1 t2)[σ,] = tapp t1[σ,] t2
-:= by simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_tlam {t} {σ : SubstVec [Term]}
-  : (tlam t)[σ,] = tlam t[σ.map (.ren [Ty] (𝐫1, .nil) $ .nil),]
-:= by simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_zero {σ : SubstVec [Term]} : zero[σ,] = zero := by
-  simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_succ {t} {σ : SubstVec [Term]} : (succ t)[σ,] = succ t[σ,] := by
-  simp only [SubstMap.smap]; rw [smap]; try simp
-
-@[simp]
-theorem Term.smap_term_nrec {m z s n} {σ : SubstVec [Term]}
-  : (nrec m z s n)[σ,] = nrec m z[σ,] s[σ.lift [2],] n[σ,]
-:= by simp only [SubstMap.smap]; rw [smap]; try simp
+theorem Term.from_action_smap_term_ty {t : Action Term} {σ : SubstVec [Term, Ty]}
+  : (from_action t)[σ,] = from_action t[σ,]
+:= by cases t <;> simp [from_action]
 
 instance : SubstSuffix Term [Ty] := ⟨⟩
 @[simp]
@@ -481,26 +446,61 @@ theorem Term.smap_ty_nrec {m z s n} {σ : SubstVec [Ty]}
   : (nrec m z s n)[σ,] = nrec m[σ.1] z[σ,] s[σ,] n[σ,]
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
+@[simp]
+theorem Term.from_action_smap_ty {t : Action Term} {σ : SubstVec [Ty]}
+  : (from_action t)[σ,] = from_action t[σ,]
+:= by cases t <;> simp [from_action]
+
+@[simp]
+instance : SubstMap Term [Term] where
+  smap σ := Term.smap (σ.1, Subst.id Ty, .nil)
+
+@[simp]
+theorem Term.smap_term_var {x} {σ : SubstVec [Term]} : (var x)[σ,] = σ.1.act x := by
+  simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_app {t1 t2} {σ : SubstVec [Term]} : (app t1 t2)[σ,] = app t1[σ,] t2[σ,] := by
+  simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_lam {A t} {σ : SubstVec [Term]}
+  : (lam A t)[σ,] = lam A t[σ.lift [1],]
+:= by simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_tapp {t1 t2} {σ : SubstVec [Term]}
+  : (tapp t1 t2)[σ,] = tapp t1[σ,] t2
+:= by simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_tlam {t} {σ : SubstVec [Term]}
+  : (tlam t)[σ,] = tlam t[σ.map (.ren [Ty] (𝐫1, .nil) $ .nil),]
+:= by simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_zero {σ : SubstVec [Term]} : zero[σ,] = zero := by
+  simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_succ {t} {σ : SubstVec [Term]} : (succ t)[σ,] = succ t[σ,] := by
+  simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.smap_term_nrec {m z s n} {σ : SubstVec [Term]}
+  : (nrec m z s n)[σ,] = nrec m z[σ,] s[σ.lift [2],] n[σ,]
+:= by simp only [SubstMap.smap]; rw [smap]; try simp
+
+@[simp]
+theorem Term.from_action_smap_term {t : Action Term} {σ : SubstVec [Term]}
+  : (from_action t)[σ,] = from_action t[σ,]
+:= by cases t <;> simp [from_action]
+
 @[reducible, simp]
 instance instSubstMapAll_Term : SubstMapAll [Term] := .cons .nil
 
 @[reducible, simp]
 instance instSubstMapAll_Term_Ty : SubstMapAll [Term, Ty] := .cons instSubstMapAll_Ty
-
-@[simp]
-theorem Term.from_action_smap {t : Action Term} {σ : SubstVec [Term, Ty]}
-  : (from_action t)[σ,] = from_action t[σ,]
-:= by cases t <;> simp [from_action]
-
-@[simp]
-theorem Term.from_action_smap1 {t : Action Term} {σ : SubstVec [Term]}
-  : (from_action t)[σ,] = from_action t[σ,]
-:= by cases t <;> simp [from_action]
-
-@[simp]
-theorem Term.from_action_smap2 {t : Action Term} {σ : SubstVec [Ty]}
-  : (from_action t)[σ,] = from_action t[σ,]
-:= by cases t <;> simp [from_action]
 
 instance : SubstMapVecDef Term Term [Ty] where
   apply_vecdef := by intro s σ; induction s generalizing σ <;> simp [*]

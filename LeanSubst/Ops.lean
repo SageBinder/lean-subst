@@ -851,25 +851,49 @@ theorem RenVec.compose_nil : RenVec.nil >> RenVec.nil = RenVec.nil := by
   simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
 @[simp]
+theorem RenVec.compose_def {r1 r2 : Ren T} {r1s r2s : RenVec V}
+  : HAndThen.hAndThen (α := RenVec (T::V)) (β := RenVec (T::V)) (r1, r1s) (λ _ => (r2, r2s))
+    = (r1 >> r2, r1s >> r2s)
+:= by simp [HAndThen.hAndThen, AndThen.andThen, compose]
+
+@[simp]
 theorem SubstVec.compose_ren_left_nil : RenVec.nil >> SubstVec.nil = SubstVec.nil := by
   simp [HAndThen.hAndThen, compose_ren_left]
+
+@[simp]
+theorem SubstVec.compose_ren_left_def {r1 : Ren T} {σ2 : Subst T} {r1s : RenVec V} {σ2s : SubstVec V}
+  : HAndThen.hAndThen (α := RenVec (T::V)) (β := SubstVec (T::V)) (r1, r1s) (λ _ => (σ2, σ2s))
+    = (r1 >> σ2, r1s >> σ2s)
+:= by simp [HAndThen.hAndThen, compose_ren_left]
 
 @[simp]
 theorem SubstVec.compose_ren_right_nil : SubstVec.nil >> RenVec.nil = SubstVec.nil := by
   simp [HAndThen.hAndThen, compose_ren_right]
 
 @[simp]
+theorem SubstVec.compose_ren_right_def [RenMapAll (T::V)] {σ1 : Subst T} {r2 : Ren T} {σ1s : SubstVec V} {r2s : RenVec V}
+  : HAndThen.hAndThen (α := SubstVec (T::V)) (β := RenVec (T::V)) (σ1, σ1s) (λ _ => (r2, r2s))
+    = (σ1⟨r2s,⟩ >> r2, σ1s >> r2s)
+:= by simp [HAndThen.hAndThen, compose_ren_right]
+
+@[simp]
 theorem SubstVec.compose_nil : SubstVec.nil >> SubstVec.nil = SubstVec.nil := by
   simp [HAndThen.hAndThen, AndThen.andThen, compose]
+
+@[simp]
+theorem SubstVec.compose_def [SubstMapAll (T::V)] {σ1 σ2 : Subst T} {σ1s σ2s : SubstVec V}
+  : HAndThen.hAndThen (α := SubstVec (T::V)) (β := SubstVec (T::V)) (σ1, σ1s) (λ _ => (σ2, σ2s))
+    = (σ1[σ2s,] >> σ2, σ1s >> σ2s)
+:= by simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
 @[simp]
 theorem RenVec.lift_compose :
   ∀ {V : List (Type u2)} {k} {r1 r2 : RenVec V}, (r1 >> r2).lift k = r1.lift k >> r2.lift k
 | [], _, _, _ => by simp
-| .cons _ _, [], (r1, r1s), (r2, r2s) => by sorry
+| .cons _ _, [], (r1, r1s), (r2, r2s) => by simp
 | .cons _ _, .cons k ks, (r1, r1s), (r2, r2s) =>
   have ih := lift_compose (k := ks) (r1 := r1s) (r2 := r2s)
-  by sorry
+  by simp [*]
 
 @[simp]
 theorem RenVec.lift_proj1 {r : RenVec (T::V)} {n k} : (r.lift (n::k)).1 = r.1.lift n := by

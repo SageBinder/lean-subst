@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Build lean project
         uses: leanprover/lean-action@v1
+        build-args: "Examples"
       - name: Build documentation
         run: cd docbuild && lake update && lake --version && lake build LeanSubst:docs
       - name: Upload the site as a GitHub Pages artifact

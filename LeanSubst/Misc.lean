@@ -395,11 +395,9 @@ macro "subst_solve_stable" : tactic => `(tactic| {
   funext; case _ t =>
   induction t generalizing r σ
   all_goals
-    simp [-Subst.rewrite_lift, -Subst.rewrite_lift_k, -Subst.rewrite_lift_ren, -Subst.rewrite_lift_k_ren, *] at *
-    try simp +instances [*]
-  all_goals try solve | rw [Subst.apply_stable h]
-  all_goals try solve | (rw [<-h]; simp +instances [Ren.to])
-  all_goals try repeat funext; grind
+    try solve | subst h; simp [*] at *; try congr
+    try solve | simp [*] at *
+    try solve | subst h; simp [*]; rw [Subst.apply_stable]; congr
 })
 
 macro "subst_solve_compose" : tactic => `(tactic| {

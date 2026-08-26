@@ -134,7 +134,7 @@ instance : SubstMapId Ty [Ty] where
   apply_id := by subst_solve_id
 
 instance : SubstMapStable Ty [Ty] where
-  apply_stable := by sorry
+  apply_stable := by subst_solve_stable
 
 instance : SubstMapRenComposeLeft Ty [Ty] where
   apply_ren_compose_left := by subst_solve_compose
@@ -509,7 +509,7 @@ instance : SubstMapId Term [Term, Ty] where
   apply_id := by subst_solve_id
 
 instance : SubstMapStable Term [Term, Ty] where
-  apply_stable := by sorry
+  apply_stable := by subst_solve_stable
 
 instance : SubstMapRenComposeLeft Term [Term, Ty] where
   apply_ren_compose_left := by subst_solve_compose
@@ -527,7 +527,7 @@ instance : SubstMapId Term [Term] where
   apply_id := by subst_solve_id
 
 instance : SubstMapStable Term [Term] where
-  apply_stable := by sorry
+  apply_stable := by subst_solve_stable
 
 instance : SubstMapRenComposeLeft Term [Term] where
   apply_ren_compose_left := by subst_solve_compose
@@ -542,7 +542,7 @@ instance : SubstMapId Term [Ty] where
   apply_id := by subst_solve_id
 
 instance : SubstMapStable Term [Ty] where
-  apply_stable := by sorry
+  apply_stable := by subst_solve_stable
 
 instance : SubstMapRenComposeLeft Term [Ty] where
   apply_ren_compose_left := by subst_solve_compose

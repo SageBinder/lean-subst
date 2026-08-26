@@ -105,6 +105,13 @@ instance [RenMap S V] [RenSuffix S V] [RenMapCompose S V] : RenMapCompose (Subst
 class SubstMapStable (S : Type u1) (V : List $ Type u2) [RenMap S V] [SubstMap S V] where
   apply_stable (r : RenVec V) (σ : SubstVec V) : r.to = σ -> rmap (S := S) r = smap σ
 
+@[grind <-]
+theorem Subst.apply_stable
+  [RenMap S V] [SubstMap S V] [SubstMapStable S V]
+  {r : RenVec V} {σ : SubstVec V} (h : r.to = σ)
+  : rmap (S := S) r = smap σ
+:= SubstMapStable.apply_stable _ _ h
+
 class SubstMapEmpty (S : Type u1) [SubstMap S []] where
   apply_empty {s : S} {σ : SubstVec []} : smap (V := []) σ s = s
 

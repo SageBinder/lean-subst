@@ -943,6 +943,12 @@ theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
 def RenVec.to : {V : List (Type u2)} -> (r : RenVec V) -> SubstVec V
 | [], _ => .nil
 | .cons _ _, (r, rs) => (r.to, rs.to)
+
+-- @[simp]
+-- theorem RenVec.to_proj1_act {r : RenVec (T::V)} {n : Nat} : r.to.1.act n =  := sorry
+
+@[simp]
+theorem RenVec.to_lift [RenMapAll V] {r : RenVec V} {k} : (r.lift k).to = r.to.lift k := sorry
 ----------------------------------------------------------------------------------------------------
 ---- Range
 ----------------------------------------------------------------------------------------------------

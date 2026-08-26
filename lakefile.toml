@@ -15,3 +15,7 @@ name = "LeanSubst"
 
 [[lean_lib]]
 name = "Examples"
+
+[[lean_exe]]
+name = "lean-subst"
+root = "Examples"

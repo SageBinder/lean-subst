@@ -259,51 +259,94 @@ instance [SubstMap S []] [SubstSuffix S []] [SubstMapEmpty S] : SubstMapEmpty (A
   apply_empty := by intro s r; cases s <;> simp
 
 instance [SubstMap T [T]] [SubstMap T (T::V)] [SubstMap T V] [SubstSuffix T V] [SubstMapVecDef T T V] : SubstMapVecDef (Action T) T V where
-  apply_vecdef := sorry
+  apply_vecdef := by
+    intro s σ
+    cases s <;> simp
+    rw [SubstMapVecDef.apply_vecdef]
 
 instance [SubstMap T [T]] [SubstMap T (T::V)] [SubstMap T V] [SubstSuffix T V] [SubstMapVecDef T T V] : SubstMapVecDef (Subst T) T V where
-  apply_vecdef := sorry
+  apply_vecdef := by
+    intro s σ
+    simp [SubstMap.smap, Subst.smap0, Subst.smap1]; funext; case _ i =>
+    cases s; simp; case _ f =>
+    cases (f i) <;> simp
+    rw [SubstMapVecDef.apply_vecdef]
 
 instance [SubstMap T (T::V)] [SubstMapId T (T::V)] : SubstMapId (Action T) (T::V) where
-  apply_id := by intro s; cases s <;> simp [SubstVec.id]; sorry
+  apply_id := by
+    intro s; cases s <;> simp [SubstVec.id]; case _ t =>
+    have lem := SubstMapId.apply_id (s := t) (V := T::V); simp at lem
+    exact lem
 
 instance [SubstMap S V] [SubstSuffix S V] [SubstMapId S V] : SubstMapId (Action S) V where
   apply_id := by intro s; cases s <;> simp
 
 instance [SubstMap S []] [SubstSuffix S []] [SubstMapEmpty S] : SubstMapEmpty (Subst S) where
-  apply_empty := by sorry
-    -- intro s r; cases s <;> simp [SubstMap.rmap, Subst.rmap]
-    -- funext; case _ f i =>
-    -- generalize zdef : f i = z at *
-    -- cases z <;> simp
+  apply_empty := by
+    intro s σ
+    simp [SubstMap.smap, Subst.smap1]
+    cases s <;> simp; case _ f =>
+    funext; case _ i =>
+    cases (f i) <;> simp
 
 instance [SubstMap T (T::V)] [SubstMapId T (T::V)] : SubstMapId (Subst T) (T::V) where
-  apply_id := by sorry
-    -- intro s; cases s
-    -- simp [SubstMap.rmap, Subst.rmap]; grind
+  apply_id := by
+    intro s; simp; cases s; case _ f =>
+    simp [SubstMap.smap, Subst.smap0]; funext; case _ i =>
+    cases (f i) <;> simp; case _ t =>
+    have lem := SubstMapId.apply_id (s := t) (V := T::V); simp at lem
+    exact lem
 
 instance [SubstMap S V] [SubstSuffix S V] [SubstMapId S V] : SubstMapId (Subst S) V where
-  apply_id := by sorry
+  apply_id := by
+    intro s; cases s; case _ f =>
+    simp [SubstMap.smap, Subst.smap1]; funext; case _ i =>
+    cases (f i) <;> simp
 
-instance [SubstMap T (T::V)] [SubstMapAll (T::V)] [SubstMapCompose T (T::V)]
+instance [SubstMap T (T::V)] [SubstMapAll (T::V)] [SubstMapCompose T (T::V)] [SubstMapVecDef T T V]
   : SubstMapCompose (Action T) (T::V)
 where
-  apply_compose := by sorry
+  apply_compose := by
+    intro s σ τ; cases s <;> simp
+    rcases σ with ⟨σ, σs⟩
+    rcases τ with ⟨τ, τs⟩
+    simp; rw [SubstMapVecDef.apply_vecdef]
 
 instance [SubstMap S V] [SubstSuffix S V] [SubstMapAll V] [SubstMapCompose S V]
   : SubstMapCompose (Action S) V
 where
   apply_compose := by intro s; cases s <;> simp
 
-instance [SubstMap T (T::V)] [SubstMapAll (T::V)] [SubstMapCompose T (T::V)]
+theorem Subst.apply_compose_lemma [SubstMap T (T::V)] :
+  ∀ [SubstMapAll (T::V)] [SubstMapCompose T (T::V)] [SubstMapVecDef T T V]
+    {s : Subst T} {σ τ : SubstVec (T :: V)},
+    s[σ,][τ,] = s[σ >> τ,]
+| .cons (i1 := i1) (i2 := i2) (i3 := i3) i4, i5, i6, ⟨f⟩, (σ, σs), (τ, τs) => by
+  simp [SubstMap.smap, smap0, smap1]
+  funext; case _ i =>
+  cases (f i)
+  case re x =>
+    simp; cases (σ.act x) <;> simp
+    rw [SubstMapVecDef.apply_vecdef]
+  case su t =>
+    simp only -- possible Lean bug here around instance resolution
+    have lem2 := @Subst.apply_compose T (T::V) _ i4.cons i5 t (σ, σs) (τ, τs)
+    rw [lem2]; simp; congr
+
+instance [SubstMap T (T::V)] [SubstMapAll (T::V)] [SubstMapCompose T (T::V)] [SubstMapVecDef T T V]
   : SubstMapCompose (Subst T) (T::V)
 where
-  apply_compose := by sorry
+  apply_compose := Subst.apply_compose_lemma
 
 instance [SubstMap S V] [SubstSuffix S V] [SubstMapAll V] [SubstMapCompose S V]
   : SubstMapCompose (Subst S) V
 where
-  apply_compose := by sorry
+  apply_compose := by
+    intro s σ τ
+    cases s; case _ f =>
+    simp [SubstMap.smap, Subst.smap1]
+    funext; case _ i =>
+    cases (f i) <;> simp
 
 -- @[simp↓, grind =]
 -- theorem Subst.apply_compose2 [SubstMap S [T1, T2]] [SubstMapCompose S [T1, T2]]

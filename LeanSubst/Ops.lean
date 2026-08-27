@@ -137,25 +137,25 @@ instance [i : SubstMapAll (T::V)] : SubstMapAll V :=
   match i with
   | @SubstMapAll.cons _ _ _ _ _ i => i
 
-instance : RenMap T [] where
-  rmap _ := id
+-- instance : RenMap T [] where
+--   rmap _ := id
 
-instance : RenSuffix T [] := ⟨⟩
+-- instance : RenSuffix T [] := ⟨⟩
 
-@[simp]
-theorem rmap_empty_vec {t : T} {r : RenVec []} : t⟨r,⟩ = t := by simp [RenMap.rmap]
+-- @[simp]
+-- theorem rmap_empty_vec {t : T} {r : RenVec []} : t⟨r,⟩ = t := by simp [RenMap.rmap]
 
-instance : RenMapAll [] := .nil
+-- instance : RenMapAll [] := .nil
 
-instance : SubstMap T [] where
-  smap _ := id
+-- instance : SubstMap T [] where
+--   smap _ := id
 
-instance : SubstSuffix T [] := ⟨⟩
+-- instance : SubstSuffix T [] := ⟨⟩
 
-@[simp]
-theorem smap_empty_vec {t : T} {σ : SubstVec []} : t[σ,] = t := by simp [SubstMap.smap]
+-- @[simp]
+-- theorem smap_empty_vec {t : T} {σ : SubstVec []} : t[σ,] = t := by simp [SubstMap.smap]
 
-instance : SubstMapAll [] := .nil
+-- instance : SubstMapAll [] := .nil
 
 -- instance [i : SubstMap T [T]] : SubstMapAll [T] where
 --   smap := λ 0 => i
@@ -867,17 +867,17 @@ theorem SubstVec.compose_ren_left_def {r1 : Ren T} {σ2 : Subst T} {r1s : RenVec
 := by simp [HAndThen.hAndThen, compose_ren_left]
 
 @[simp]
-theorem SubstVec.compose_ren_right_nil : SubstVec.nil >> RenVec.nil = SubstVec.nil := by
-  simp [HAndThen.hAndThen, compose_ren_right]
-
-@[simp]
 theorem SubstVec.compose_ren_right_def [RenMapAll (T::V)] {σ1 : Subst T} {r2 : Ren T} {σ1s : SubstVec V} {r2s : RenVec V}
   : HAndThen.hAndThen (α := SubstVec (T::V)) (β := RenVec (T::V)) (σ1, σ1s) (λ _ => (r2, r2s))
     = (σ1⟨r2s,⟩ >> r2, σ1s >> r2s)
 := by simp [HAndThen.hAndThen, compose_ren_right]
 
 @[simp]
-theorem SubstVec.compose_nil : SubstVec.nil >> SubstVec.nil = SubstVec.nil := by
+theorem SubstVec.compose_ren_right_nil [RenMapAll []] : SubstVec.nil >> RenVec.nil = SubstVec.nil := by
+  simp [HAndThen.hAndThen, compose_ren_right]
+
+@[simp]
+theorem SubstVec.compose_nil [SubstMapAll []] : SubstVec.nil >> SubstVec.nil = SubstVec.nil := by
   simp [HAndThen.hAndThen, AndThen.andThen, compose]
 
 @[simp]

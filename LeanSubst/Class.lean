@@ -60,13 +60,16 @@ instance [RenMap S []] [RenSuffix S []] [RenMapEmpty S] : RenMapEmpty (Action S)
   apply_empty := by intro s r; cases s <;> simp
 
 instance [RenMap T [T]] [RenMap T (T::V)] [RenMap T V] [RenSuffix T V] [RenMapVecDef T T V] : RenMapVecDef (Action T) T V where
-  apply_vecdef := by intro s r; cases s <;> simp; grind
+  apply_vecdef := by
+    intro s r; cases s <;> simp
+    rw [Ren.apply_vecdef]
 
 instance [RenMap T [T]] [RenMap T (T::V)] [RenMap T V] [RenSuffix T V] [RenMapVecDef T T V] : RenMapVecDef (Subst T) T V where
   apply_vecdef := by
     intro s r; cases s; case _ f =>
     simp [RenMap.rmap, Subst.rmap0, Subst.rmap1]; funext; case _ n =>
-    cases (f n) <;> simp; grind
+    cases (f n) <;> simp
+    rw [Ren.apply_vecdef]
 
 instance [RenMap T (T::V)] [RenMapId T (T::V)] : RenMapId (Action T) (T::V) where
   apply_id := by
@@ -135,8 +138,13 @@ theorem Subst.apply_stable
   : rmap (S := S) r = smap σ
 := SubstMapStable.apply_stable _ _ h
 
-class SubstMapEmpty (S : Type u1) [SubstMap S []] where
+class SubstMapEmpty (S : Type u1) [SubstMap S ([] : List (Type u1))] where
   apply_empty {s : S} {σ : SubstVec []} : smap (V := []) σ s = s
+
+@[simp]
+theorem Subst.apply_empty [SubstMap S []] [SubstMapEmpty S] {s : S} {σ : SubstVec []}
+  : smap (V := []) σ s = s
+:= SubstMapEmpty.apply_empty
 
 class SubstMapVecDef (S : Type u1) (T : Type u2) (V : List (Type u2)) [SubstMap S [T]] [SubstMap S (T::V)] [SubstMap S V] where
   apply_vecdef {s : S} {σ : SubstVec (T::V)} : s[σ,] = s[σ.2,][σ.1]
@@ -147,11 +155,6 @@ theorem Subst.apply_vecdef
   {s : S} {σ : SubstVec (T::V)}
   : s[σ,] = s[σ.2,][σ.1]
 := SubstMapVecDef.apply_vecdef
-
-@[simp]
-theorem Subst.apply_empty [SubstMap S []] [SubstMapEmpty S] {s : S} {σ : SubstVec []}
-  : SubstMap.smap (V := []) σ s = s
-:= SubstMapEmpty.apply_empty
 
 class SubstMapId (S : Type u1) (V : List $ Type u2) [SubstMap S V] where
   apply_id {s : S} : s[.id V,] = s

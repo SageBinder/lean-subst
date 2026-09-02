@@ -15,7 +15,18 @@ name = "LeanSubst"
 
 [[lean_lib]]
 name = "Examples"
+root = "Examples"
 
 [[lean_exe]]
 name = "lean-subst"
-root = "Examples"
+root = "Main"
+
+[[require]]
+name = "batteries"
+scope = "leanprover-community"
+rev = "v4.33.0"
+
+[[require]]
+name = "aesop"
+scope = "leanprover-community"
+rev = "v4.33.0"

@@ -1,5 +1,7 @@
 
 import LeanSubst
+import LeanSubst.Automation.Basic
+
 open LeanSubst
 
 namespace SystemFWithNat
@@ -20,6 +22,140 @@ inductive Term where
 | succ : Term -> Term
 | nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Term's in s
 
+#leansubst var Ty.var
+#leansubst bind Ty at pos 0 in Ty.all
+
+#leansubst var Term.var
+#leansubst bind Term at pos 1 in Term.lam
+#leansubst bind Ty at pos 0 in Term.tlam
+#leansubst bind 2 of Term at pos 2 in Term.nrec
+
+-- set_option diagnostics true
+
+-- #leansubst generate Ty, Term
+
+-- -- Checking Ty --
+-- #print Ty.from_action
+-- #print Ty.from_action_id
+-- #print Ty.from_action_succ
+-- #print Ty.from_action_re
+-- #print Ty.from_action_su
+
+-- #print Ty.rmap
+-- #print Ty.rmap._f
+
+-- #print Ty.rmap_fix
+-- #print Ty.rmap_empty
+
+-- #print Ty.rmap_var
+-- #print Ty.rmap_arrow
+-- #print Ty.rmap_all
+-- #print Ty.rmap_nat
+-- #print Ty.from_action_rmap
+
+-- #print Ty.smap
+-- #print Ty.smap._f
+
+-- #print Ty.smap
+-- #print Ty.smap._f
+
+-- #print Ty.smap_fix
+-- #print Ty.smap_empty
+
+-- #print Ty.smap_var
+-- #print Ty.smap_arrow
+-- #print Ty.smap_all
+-- #print Ty.smap_nat
+-- #print Ty.from_action_smap
+
+
+-- -- Checking Term --
+-- #print Term.from_action
+-- #print Term.from_action_id
+-- #print Term.from_action_succ
+-- #print Term.from_action_re
+-- #print Term.from_action_su
+
+-- -- rmap
+-- #print Term.rmap
+-- #print Term.rmap_fix
+
+-- #print Term.rmap
+-- #print Term.rmap._f
+
+-- #print Term.rmap_empty
+
+-- #print Term.rmap_term_var
+-- #print Term.rmap_term_app
+-- #print Term.rmap_term_lam
+-- #print Term.rmap_term_tapp
+-- #print Term.rmap_term_tlam
+-- #print Term.rmap_term_zero
+-- #print Term.rmap_term_succ
+-- #print Term.rmap_term_nrec
+
+-- #print Term.rmap_ty_var
+-- #print Term.rmap_ty_app
+-- #print Term.rmap_ty_lam
+-- #print Term.rmap_ty_tapp
+-- #print Term.rmap_ty_tlam
+-- #print Term.rmap_ty_zero
+-- #print Term.rmap_ty_succ
+-- #print Term.rmap_ty_nrec
+
+-- #print Term.rmap_term_ty_var
+-- #print Term.rmap_term_ty_app
+-- #print Term.rmap_term_ty_lam
+-- #print Term.rmap_term_ty_tapp
+-- #print Term.rmap_term_ty_tlam
+-- #print Term.rmap_term_ty_zero
+-- #print Term.rmap_term_ty_succ
+-- #print Term.rmap_term_ty_nrec
+
+-- #print Term.from_action_rmap
+-- #print Term.from_action_rmap0
+-- #print Term.from_action_rmap1
+
+-- -- smap
+-- #print Term.smap
+-- #print Term.smap_fix
+
+-- #print Term.smap
+-- #print Term.smap._f
+
+-- #print Term.smap_empty
+
+-- #print Term.smap_term_var
+-- #print Term.smap_term_app
+-- #print Term.smap_term_lam
+-- #print Term.smap_term_tapp
+-- #print Term.smap_term_tlam
+-- #print Term.smap_term_zero
+-- #print Term.smap_term_succ
+-- #print Term.smap_term_nrec
+
+-- #print Term.smap_ty_var
+-- #print Term.smap_ty_app
+-- #print Term.smap_ty_lam
+-- #print Term.smap_ty_tapp
+-- #print Term.smap_ty_tlam
+-- #print Term.smap_ty_zero
+-- #print Term.smap_ty_succ
+-- #print Term.smap_ty_nrec
+
+-- #print Term.smap_term_ty_var
+-- #print Term.smap_term_ty_app
+-- #print Term.smap_term_ty_lam
+-- #print Term.smap_term_ty_tapp
+-- #print Term.smap_term_ty_tlam
+-- #print Term.smap_term_ty_zero
+-- #print Term.smap_term_ty_succ
+-- #print Term.smap_term_ty_nrec
+
+-- #print Term.from_action_smap
+-- #print Term.from_action_smap0
+-- #print Term.from_action_smap1
+
 ----------------------------------------------------------------------------------------------------
 -- Ty Renaming & Substitution
 ----------------------------------------------------------------------------------------------------
@@ -37,7 +173,7 @@ theorem Ty.from_action_succ {n} : from_action (𝐬1.act n) = var (n + 1) := by
   simp [from_action]
 
 @[simp]
-theorem Ty.from_acton_re {n} : from_action (re n) = var n := by simp [from_action]
+theorem Ty.from_action_re {n} : from_action (re n) = var n := by simp [from_action]
 
 @[simp]
 theorem Ty.from_action_su {t} : from_action (su t) = t := by simp [from_action]
@@ -63,8 +199,7 @@ instance : RenMap Ty [] where
   rmap _ := id
 
 @[simp]
-theorem Ty.rmap_empty {t : Ty} {r : RenVec []} : t⟨r,⟩ = t := by
-  simp only [RenMap.rmap, id]
+theorem Ty.rmap_empty {t : Ty} {r : RenVec []} : t⟨r,⟩ = t := rfl
 
 @[reducible, simp]
 instance instRenMapAll_Ty : RenMapAll [Ty] := .cons .nil
@@ -78,7 +213,7 @@ theorem Ty.rmap_nat {r : RenVec [Ty]} : (nat)⟨r,⟩ = nat := by
   simp only [RenMap.rmap]; rw [rmap]
 
 @[simp]
-theorem Ty.rmap_app {t1 t2 : Ty} {r : RenVec [Ty]} : (arrow t1 t2)⟨r,⟩ = arrow t1⟨r,⟩ t2⟨r,⟩ := by
+theorem Ty.rmap_arrow {t1 t2 : Ty} {r : RenVec [Ty]} : (arrow t1 t2)⟨r,⟩ = arrow t1⟨r,⟩ t2⟨r,⟩ := by
   simp only [RenMap.rmap]; rw [rmap]
 
 @[simp]
@@ -131,7 +266,7 @@ theorem Ty.smap_nat {σ : SubstVec [Ty]} : (nat)[σ,] = nat := by
   simp only [SubstMap.smap]; rw [smap]
 
 @[simp]
-theorem Ty.smap_app {t1 t2 : Ty} {σ : SubstVec [Ty]} : (arrow t1 t2)[σ,] = arrow t1[σ,] t2[σ,] := by
+theorem Ty.smap_arrow {t1 t2 : Ty} {σ : SubstVec [Ty]} : (arrow t1 t2)[σ,] = arrow t1[σ,] t2[σ,] := by
   simp only [SubstMap.smap]; rw [smap]
 
 @[simp]
@@ -205,15 +340,14 @@ instance : RenMap Term [Term, Ty] where
 theorem Term.rmap_fix {r : RenVec [Term, Ty]} {t : Term} : rmap r t = t⟨r,⟩ := by simp [RenMap.rmap]
 
 @[simp]
-theorem Term.rmap_term_ty_var {x} {r : RenVec [Term, Ty]} : (var x)⟨r,⟩ = var (r.1.act x) := by
-  simp only [RenMap.rmap]; rw [rmap]
+theorem Term.rmap_term_ty_var {x} {r : RenVec [Term, Ty]} : (var x)⟨r,⟩ = var (r.1.act x) := rfl
 
 @[simp]
 theorem Term.rmap_term_ty_app {t1 t2} {r : RenVec [Term, Ty]} : (app t1 t2)⟨r,⟩ = app t1⟨r,⟩ t2⟨r,⟩ := by
   simp only [RenMap.rmap]; rw [rmap]
 
 @[simp]
-theorem Term.rmap_term_ty_lam {A t} {r : RenVec [Term, Ty]}
+theorem Term.rmap_term_ty_lam'' {A t} {r : RenVec [Term, Ty]}
   : (lam A t)⟨r,⟩ = lam A⟨r.2.1⟩ t⟨r.lift [1, 0],⟩
 := by simp only [RenMap.rmap]; rw [rmap]; try simp
 
@@ -290,7 +424,7 @@ theorem Term.rmap_term_app {t1 t2} {r : RenVec [Term]} : (app t1 t2)⟨r,⟩ = a
   simp only [RenMap.rmap]; rw [rmap]; try simp
 
 @[simp]
-theorem Term.rmap_term_lam {A t} {r : RenVec [Term]}
+theorem Term.rmap_term_lam' {A t} {r : RenVec [Term]}
   : (lam A t)⟨r,⟩ = lam A t⟨r.lift [1],⟩
 := by simp only [RenMap.rmap]; rw [rmap]; try simp
 
@@ -322,12 +456,12 @@ theorem Term.from_action_rmap {t : Action Term} {r : RenVec [Term, Ty]}
 := by cases t <;> simp [from_action]
 
 @[simp]
-theorem Term.from_action_rmap1 {t : Action Term} {r : RenVec [Term]}
+theorem Term.from_action_rmap0 {t : Action Term} {r : RenVec [Term]}
   : (from_action t)⟨r,⟩ = from_action t⟨r,⟩
 := by cases t <;> simp [from_action]
 
 @[simp]
-theorem Term.from_action_rmap2 {t : Action Term} {r : RenVec [Ty]}
+theorem Term.from_action_rmap1 {t : Action Term} {r : RenVec [Ty]}
   : (from_action t)⟨r,⟩ = from_action t⟨r,⟩
 := by cases t <;> simp [from_action]
 
@@ -375,7 +509,7 @@ def Term.smap (σ : SubstVec [Term, Ty]) : Term -> Term
 | app t1 t2 => app (t1.smap σ) (t2.smap σ)
 | lam A t => lam A[σ.2.1] (t.smap $ σ.lift [1, 0])
 | tapp t A => tapp (t.smap σ) A[σ.2.1]
-| tlam t => tlam (t.smap $ σ.map (.ren [Ty] (𝐫1, .nil) $ .lift 1 $ .nil))
+| tlam t => tlam (t.smap $ σ.map ((SubstVec.MapOps.ren [Ty] ⟨Ren.add Ty 1, .nil⟩) $ .lift 1 $ .nil))
 | zero => zero
 | succ t => succ (t.smap σ)
 | nrec motive z s n =>
@@ -425,7 +559,7 @@ theorem Term.smap_term_ty_nrec {m z s n} {σ : SubstVec [Term, Ty]}
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
 @[simp]
-theorem Term.from_action_smap_term_ty {t : Action Term} {σ : SubstVec [Term, Ty]}
+theorem Term.from_action_smap {t : Action Term} {σ : SubstVec [Term, Ty]}
   : (from_action t)[σ,] = from_action t[σ,]
 := by cases t <;> simp [from_action]
 
@@ -471,7 +605,7 @@ theorem Term.smap_ty_nrec {m z s n} {σ : SubstVec [Ty]}
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
 @[simp]
-theorem Term.from_action_smap_ty {t : Action Term} {σ : SubstVec [Ty]}
+theorem Term.from_action_smap1 {t : Action Term} {σ : SubstVec [Ty]}
   : (from_action t)[σ,] = from_action t[σ,]
 := by cases t <;> simp [from_action]
 
@@ -499,7 +633,7 @@ theorem Term.smap_term_tapp {t1 t2} {σ : SubstVec [Term]}
 
 @[simp]
 theorem Term.smap_term_tlam {t} {σ : SubstVec [Term]}
-  : (tlam t)[σ,] = tlam t[σ.map (.ren [Ty] (𝐫1, .nil) $ .nil),]
+  : (tlam t)[σ,] = tlam t[σ.map (.ren [Ty] (Ren.add Ty 1, .nil) $ .nil),]
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
 @[simp]
@@ -516,7 +650,7 @@ theorem Term.smap_term_nrec {m z s n} {σ : SubstVec [Term]}
 := by simp only [SubstMap.smap]; rw [smap]; try simp
 
 @[simp]
-theorem Term.from_action_smap_term {t : Action Term} {σ : SubstVec [Term]}
+theorem Term.from_action_smap0 {t : Action Term} {σ : SubstVec [Term]}
   : (from_action t)[σ,] = from_action t[σ,]
 := by cases t <;> simp [from_action]
 

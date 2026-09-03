@@ -212,13 +212,13 @@ namespace Automation
     let toGlobal (ty : Ident) : CommandElabM Name := Command.liftCoreM $ realizeGlobalConstNoOverload ty.raw
     let ty := tys[0]!
     let tyName := ty.raw.getId
-    let tyStr := tyName.toString
+    -- let tyStr := tyName.toString
     let tyNameGlobal ← toGlobal ty
 
     dbg_trace s!"Generating {ty} with list {tys}"
 
-    let tyArr ← `([$tys.toArray,*])
-    let tysNamesGlobal ← tys.mapM toGlobal
+    -- let tyArr ← `([$tys.toArray,*])
+    -- let tysNamesGlobal ← tys.mapM toGlobal
 
     let qualify str := mkIdent $ .str tyName str
 
@@ -226,7 +226,7 @@ namespace Automation
     let varName ← match varCtorName with
     | some name => pure name
     | none => throwError "ruh roh"
-    let varType := (← getConstInfo varName).type
+    -- let varType := (← getConstInfo varName).type
     let var := mkIdent varName
 
     let from_action := qualify "from_action"
@@ -240,22 +240,21 @@ namespace Automation
       | re $y => $var $y
       | su $t => $t
 
-      @[simp, grind =]
+      @[simp]
       theorem $from_action_id {$n} : $from_action (𝐬0.act $n) = $var $n := rfl
 
-      @[simp, grind =]
+      @[simp]
       theorem $from_action_succ {$n} : $from_action (𝐬1.act $n) = $var ($n + 1) := rfl
 
-      @[simp, grind =]
+      @[simp]
       theorem $from_action_re {$n} : $from_action (re $n) = $var $n := rfl
 
-      @[simp, grind =]
+      @[simp]
       theorem $from_action_su {$n} : $from_action (su $n) = $n := rfl
 
       instance : Coe (Action $ty) $ty where
         coe := $from_action
     )
-
 
     let rmap := qualify "rmap"
     let smap := qualify "smap"
@@ -511,6 +510,9 @@ namespace Automation
           instance $instTheMapAll_tys:ident : $TheMapAll [$tys.toArray:ident,*] := .cons $instTheMapAll_tys'
         )
 
+    -- let mkMapLawInstances (mapType : MapType) := do
+
+
     -- Executing rmap stuff
     let rmapCases ← mkAllCases (map_f .rmap false) tyNameGlobal
     elabCommand $ ← `(
@@ -528,12 +530,36 @@ namespace Automation
       instance : RenMapEmpty $ty where
         apply_empty := by intro $s:ident; simp [RenMap.rmap]
 
+      instance : RenMapVecDef $ty $ty [] where
+        apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
+
       instance : RenMapId $ty [$ty] where
         apply_id := by subst_solve_id
 
       instance : RenMapCompose $ty [$ty] where
         apply_compose := by subst_solve_compose
     )
+
+    if tys.length > 1 then
+      forEachSuffix tys.tail (fun tys => do
+        elabCommand $ ← `(
+          instance : RenMapVecDef $ty $ty [$tys.toArray,*] where
+            apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
+
+          instance : RenMapId $ty [$tys.toArray,*] where
+            apply_id := by subst_solve_id
+
+          instance : RenMapCompose $ty [$tys.toArray,*] where
+            apply_compose := by subst_solve_compose
+        )
+      )
+      elabCommand $ ← `(
+        instance : RenMapId $ty [$tys.toArray,*] where
+          apply_id := by subst_solve_id
+
+        instance : RenMapCompose $ty [$tys.toArray,*] where
+          apply_compose := by subst_solve_compose
+      )
 
     mkMapAllInstances .rmap
 
@@ -556,21 +582,72 @@ namespace Automation
       instance : SubstMapEmpty $ty where
         apply_empty := by intro $s:ident; simp [SubstMap.smap]
 
+      instance : SubstMapVecDef $ty $ty [] where
+        apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
+
       instance : SubstMapId $ty [$ty] where
         apply_id := by subst_solve_id
 
       instance : SubstMapStable $ty [$ty] where
-        apply_stable := by subst_solve_stable
+        apply_stable := by sorry --subst_solve_stable
 
       instance : SubstMapRenComposeLeft $ty [$ty] where
-        apply_ren_compose_left := by subst_solve_compose
+        apply_ren_compose_left := by sorry -- subst_solve_compose
 
       instance : SubstMapRenComposeRight $ty [$ty] where
-        apply_ren_compose_right := by subst_solve_compose
+        apply_ren_compose_right := by sorry -- subst_solve_compose
 
       instance : SubstMapCompose $ty [$ty] where
-        apply_compose := by subst_solve_compose
+        apply_compose := by sorry -- subst_solve_compose
     )
+
+    if tys.length > 1 then
+      forEachSuffix tys.tail (fun tys => do
+        elabCommand $ ← `(
+          instance : SubstMapVecDef $ty $ty [$tys.toArray,*] where
+            apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
+
+          instance : SubstMapId $ty [$tys.toArray,*] where
+            apply_id := by subst_solve_id
+
+          instance : SuffixCommuteRenRen $ty [$tys.toArray,*] where
+            ren_ren := by sorry --subst_solve_compose
+
+          instance : SuffixCommuteRenSub $ty [$tys.toArray,*] where
+            ren_sub := by sorry --subst_solve_compose
+
+          instance : SuffixCommuteSubRen $ty [$tys.toArray,*] where
+            sub_ren := by sorry --subst_solve_compose
+
+          instance : SubstMapStable $ty [$tys.toArray,*] where
+            apply_stable := by sorry --subst_solve_stable
+
+          instance : SubstMapRenComposeLeft $ty [$tys.toArray,*] where
+            apply_ren_compose_left := by sorry --subst_solve_compose
+
+          instance : SubstMapRenComposeRight $ty [$tys.toArray,*] where
+            apply_ren_compose_right := by sorry --subst_solve_compose
+
+          instance : SubstMapCompose $ty [$tys.toArray,*] where
+            apply_compose := by sorry --subst_solve_compose
+        )
+      )
+      elabCommand $ ← `(
+        instance : SubstMapId $ty [$tys.toArray,*] where
+          apply_id := by subst_solve_id
+
+        instance : SubstMapStable $ty [$tys.toArray,*] where
+          apply_stable := by sorry --subst_solve_stable
+
+        instance : SubstMapRenComposeLeft $ty [$tys.toArray,*] where
+          apply_ren_compose_left := by sorry --subst_solve_compose
+
+        instance : SubstMapRenComposeRight $ty [$tys.toArray,*] where
+          apply_ren_compose_right := by sorry --subst_solve_compose
+
+        instance : SubstMapCompose $ty [$tys.toArray,*] where
+          apply_compose := by sorry --subst_solve_compose
+      )
 
   def genAllTys : List Ident → CommandElabM Unit
   | [] => pure ()

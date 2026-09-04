@@ -176,19 +176,24 @@ namespace Automation
     `($stx.1)
 
   -- Applies a computation for each suffix in the list Tys.
-  def forEachSuffix : (tys : List Ident) → (f : List Ident → CommandElabM Unit) → CommandElabM Unit
+  def forEachSuffix {A : Type} : (tys : List A) → (f : List A → CommandElabM Unit) → CommandElabM Unit
   | [], _ => pure ()
   | tys@(.cons _ tys'), f => do
     f tys
     forEachSuffix tys' f
 
-  def forEachPrefix : (tys : List Ident) → (f : List Ident → CommandElabM Unit) → CommandElabM Unit
+  def mapEachSuffix {A B : Type} : (tys : List A) → (f : List A → CommandElabM B) → CommandElabM $ List B
+  | [], _ => pure []
+  | tys@(.cons _ tys'), f => do
+    pure $ (← (f tys)) :: (← mapEachSuffix tys' f)
+
+  def forEachPrefix {A : Type} : (tys : List A) → (f : List A → CommandElabM Unit) → CommandElabM Unit
   | [], _ => pure ()
   | tys@(.cons _ _), f => do
     f tys
     forEachSuffix tys.reverse.tail.reverse f
 
-  def forHeadAndEachSuffix : (tys : List Ident) → (f : List Ident → CommandElabM Unit) → CommandElabM Unit
+  def forHeadAndEachSuffix {A : Type} : (tys : List A) → (f : List A → CommandElabM Unit) → CommandElabM Unit
   | [], _ => pure ()
   | .cons ty [], f => do f [ty]
   | tys@(.cons ty _), f => do
@@ -209,6 +214,8 @@ namespace Automation
 
   -- The main function
   def genTy (tys : List Ident) : CommandElabM Unit := do
+    let numTotalTys := tys.length
+
     let toGlobal (ty : Ident) : CommandElabM Name := Command.liftCoreM $ realizeGlobalConstNoOverload ty.raw
     let ty := tys[0]!
     let tyName := ty.raw.getId
@@ -355,35 +362,30 @@ namespace Automation
               pure ⟨mkIdent ty', Syntax.mkNatLit 0⟩)
       pure $ increments.filter (fun (_, stx) ↦ match stx with | `(0) => false | _ => true)
 
-    let mkMapArr (data : ArgData) (xs : List Ident) (tys : List Ident) : CommandElabM $ Option MapOrLift :=
+    let mkLiftsAndRens (data : ArgData) (xs : List Ident) (tys : List Ident) : CommandElabM $ Option $ Term × List Term :=
       match data with
       | .binder _ => do
         let lifts ← tys.mapM $ getLiftsOfTy data xs
         let optionLifts := lifts.map (fun stx : Term ↦ if BEq.beq stx $ Syntax.mkNatLit 0 then none else some stx)
         -- Check if all lifts are syntactically just 0
-        if optionLifts.all (fun | none => true | some _ => false) then
+        if optionLifts.all (fun | .none => true | .some _ => false) then
           pure none
         else
           let tysNamesGlobal ← tys.mapM toGlobal
-          let incrementsList ← tysNamesGlobal.mapM $ getIncrementsOfTy lifts tysNamesGlobal
-          let zipped := incrementsList.zip optionLifts
-          let ops : List $ Term × Bool ← zipped.mapM (fun ⟨incs, lift⟩ ↦ do
-            let incOps ← incs.mapM (fun ⟨ty, inc⟩ ↦
-              if BEq.beq inc $ Syntax.mkNatLit 0 then `(Ren.id $ty:ident) else `(Ren.add $ty:ident $inc))
-            let anyIncs := incs.tail.any (fun ⟨_, inc⟩ ↦ ¬ (BEq.beq inc $ Syntax.mkNatLit 0))
-
-            let tyTail := tysNamesGlobal.tail.toArray.map mkIdent
-            let op ← match (anyIncs, lift) with
-            | (false, none) => `(.skip)
-            | (true, none) => `(.ren [$tyTail,*] ⟨$incOps.tail.toArray,*, .nil⟩)
-            | (false, some ℓ) => `(.lift $ℓ)
-            | (true, some ℓ) => `(.both [$tyTail,*] ⟨$incOps.tail.toArray,*, .nil⟩ $ℓ)
-            pure ⟨op, anyIncs⟩
+          let zipped := tysNamesGlobal.zip optionLifts
+          let rens : List $ Term ← mapEachSuffix zipped (fun zippedSfx ↦ do
+            let ⟨tys, optionLifts⟩ := zippedSfx.unzip
+            let lifts ← zippedSfx.tail.mapM (fun | ⟨ty, .none⟩ => `(Ren.id $(mkIdent ty)) | ⟨ty, .some n⟩ => `(Ren.add $(mkIdent ty) $n))
+            let tysHd := mkIdent tys.head!
+            let tysTail := (tys.tail!.map mkIdent).toArray
+            let i := Syntax.mkNatLit $ numTotalTys - tys.length -- shadowing is bad, kids
+            `(.ren $tysHd [$tysTail,*] ⟨$lifts.toArray,*, .nil⟩ $i rfl)
           )
-          if ops.all (¬ ·.2) then -- If we don't have to apply any renamings
-            pure $ MapOrLift.lift $ ← `([$lifts.toArray,*])
-          else
-            pure $ MapOrLift.map $ ← (ops.map Prod.fst).foldrM (fun t1 t2 ↦ `($t1 $ $t2)) $ ← `(LeanSubst.SubstVec.MapOps.nil)
+          let rens := rens.reverse.tail.reverse -- dropLast
+          dbg_trace s!"\n For ty list {tys}, rens is {rens} \n"
+          let liftsTm ← `([$lifts.toArray,*])
+          pure $ some ⟨liftsTm, rens⟩
+
       | _ => pure none
 
     let smap_fVar (tys : List Ident) xs ctor : CommandElabM Term := do
@@ -412,10 +414,13 @@ namespace Automation
           else
             if useTCSyntax then `(($x)⟨$(r),⟩) else `($rmap $r $x)
         | .smap =>
-          if let MapOrLift.map opsArr ← mkMapArr data xs tys then
-            if useTCSyntax then `(($x)[$(σ).map $opsArr,]) else `($smap ($(σ).map $opsArr) $x)
-          else if let MapOrLift.lift opsArr ← mkMapArr data xs tys then
-            if useTCSyntax then `(($x)[$(σ).lift $opsArr,]) else `($smap ($(σ).lift $opsArr) $x)
+          if let some ⟨lift, []⟩ ← mkLiftsAndRens data xs tys then
+            if useTCSyntax then `(($x)[($(σ).lift $lift),]) else `($smap ($(σ).lift $lift) $x)
+          else if let some ⟨lift, rens⟩ ← mkLiftsAndRens data xs tys then
+            let mut σ' ← `($(σ) |> SubstVec.lift $lift)
+            for ren in rens do
+              σ' ← `($σ' |> $ren)
+            if useTCSyntax then `(($x)[$(σ'),]) else `($smap ($σ') $x)
           else
             if useTCSyntax then `(($x)[$(σ),]) else `($smap $σ $x)
       else if let some theTy ← List.findM? (fun (ty : Ident) ↦ do pure (← liftCoreM $ runMetaMAsCoreM $ isDefEq (← liftTermElabM $ Term.elabTerm ty.raw none) ty')) tys then
@@ -463,6 +468,7 @@ namespace Automation
         let fLhs lhs : CommandElabM Term := match mapType with | .rmap => `(($lhs)⟨$(rσ),⟩) | .smap => `(($lhs)[$(rσ),])
         let eq ← mkCtorEq fLhs fRhs ctor (fVar := match mapType with | .rmap => none | .smap => some $ smap_fVar sfx)
         let args ← mkCtorArgs ctor
+        dbg_trace s!"\n MAKING THEOREM {thmName},\n suffix is {sfx}, \n equation is {eq}\n"
         elabCommand $ ← `(
           @[simp]
           theorem $thmName {$args.toArray*} {$rσ : $TheVec [$sfx.toArray,*]} : $eq :=

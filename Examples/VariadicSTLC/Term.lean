@@ -8,10 +8,13 @@ inductive Ty where
 | base : Ty
 | arrow : Ty -> Ty
 
+@[reducible]
+def Variadic (n : Nat) (ty : Type) := Fin n → ty
+
 inductive Term where
 | var : Nat -> Term
-| app n : Term -> (Fin n -> Term) -> Term
-| lam n : (Fin n -> Ty) -> Term -> Term
+| app n : Term -> Variadic n Term -> Term
+| lam n : Variadic n Ty -> Term -> Term
 
 @[coe]
 def Term.from_action : Action Term -> Term

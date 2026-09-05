@@ -20,7 +20,7 @@ inductive Term where
 | tlam (t : Term) : Term -- binds Ty in t (does it make sense to allow a user to give a name instead of a position?)
 | zero : Term
 | succ : Term -> Term
-| nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Term's in s
+| nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Terms in s
 
 #leansubst var Ty.var
 #leansubst bind Ty at pos 0 in Ty.all
@@ -30,35 +30,7 @@ inductive Term where
 #leansubst bind Ty at pos 0 in Term.tlam
 #leansubst bind 2 of Term at pos 2 in Term.nrec
 
---set_option diagnostics true
-
 #leansubst generate Ty, Term
-
--- | tlam t => tlam (t.smap $ σ |> .lift [0, 1] |> .ren Term [Ty] ⟨𝐫1, .nil⟩ 0 rfl)
--- | x0.tlam => fun x => (x.1 (SubstVec.ren Term [Ty] (Ren.add Ty 1, RenVec.nil) 0 ⋯ (SubstVec.lift [0, 1] σ))).tlam
-#print Term.smap._f
-#print Term.smap_term_tlam
-
-theorem SystemFWithNat.Term.smap_term_tlam' : ∀ {x0 : Term} {σ : SubstVec [Term]}, x0.tlam[σ,] = x0[σ,].tlam := by
-  intros
-  simp only [SubstMap.smap]
-  simp [-Term.smap_term_tlam]
-
-
-
-instance : RenMapVecDef Term Term [Ty] where
-  apply_vecdef := by intro s r; induction s generalizing r <;> simp [*]
-
-instance : RenMapId Term [Term, Ty] where
-  apply_id := by subst_solve_id
-
-instance : RenMapCompose Term [Term, Ty] where
-  apply_compose := by subst_solve_compose
-
-instance : RenMapVecDef Term Term [] where
-  apply_vecdef := by intro s r; induction s generalizing r <;> simp [*]
-
-
 
 -- Checking Ty --
 #print Ty.from_action

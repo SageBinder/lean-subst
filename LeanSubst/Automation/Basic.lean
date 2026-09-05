@@ -222,8 +222,6 @@ namespace Automation
     -- let tyStr := tyName.toString
     let tyNameGlobal ← toGlobal ty
 
-    dbg_trace s!"Generating {ty} with list {tys}"
-
     -- let tyArr ← `([$tys.toArray,*])
     -- let tysNamesGlobal ← tys.mapM toGlobal
 
@@ -362,9 +360,19 @@ namespace Automation
               pure ⟨mkIdent ty', Syntax.mkNatLit 0⟩)
       pure $ increments.filter (fun (_, stx) ↦ match stx with | `(0) => false | _ => true)
 
-    let mkLiftsAndRens (data : ArgData) (xs : List Ident) (tys : List Ident) : CommandElabM $ Option $ Term × List Term :=
+    let mkLiftsAndRens (data : ArgData) (xs : List Ident) (tys' : List Ident) : CommandElabM $ Option $ Term × List Term :=
       match data with
       | .binder _ => do
+        let ⟨tys, headOnly⟩ : (List Ident) × Bool ←
+          if tys'.length = 1 ∧ tys.length > 1 then do
+            let ty'0_eq_ty0 ← liftCoreM $ runMetaMAsCoreM $ isDefEq (← liftTermElabM $ Term.elabTerm (tys'.head!) none) (← liftTermElabM $ Term.elabTerm (tys.head!) none)
+            if ty'0_eq_ty0 then -- The head-only case (for instance, tys' = [Term] and tys = [Term, Ty])
+              pure ⟨tys, true⟩
+            else
+              pure ⟨tys', false⟩
+          else
+            pure ⟨tys', false⟩
+
         let lifts ← tys.mapM $ getLiftsOfTy data xs
         let optionLifts := lifts.map (fun stx : Term ↦ if BEq.beq stx $ Syntax.mkNatLit 0 then none else some stx)
         -- Check if all lifts are syntactically just 0
@@ -382,10 +390,8 @@ namespace Automation
             `(.ren $tysHd [$tysTail,*] ⟨$lifts.toArray,*, .nil⟩ $i rfl)
           )
           let rens := rens.reverse.tail.reverse -- dropLast
-          dbg_trace s!"\n For ty list {tys}, rens is {rens} \n"
           let liftsTm ← `([$lifts.toArray,*])
           pure $ some ⟨liftsTm, rens⟩
-
       | _ => pure none
 
     let smap_fVar (tys : List Ident) xs ctor : CommandElabM Term := do
@@ -414,10 +420,10 @@ namespace Automation
           else
             if useTCSyntax then `(($x)⟨$(r),⟩) else `($rmap $r $x)
         | .smap =>
-          if let some ⟨lift, []⟩ ← mkLiftsAndRens data xs tys then
-            if useTCSyntax then `(($x)[($(σ).lift $lift),]) else `($smap ($(σ).lift $lift) $x)
-          else if let some ⟨lift, rens⟩ ← mkLiftsAndRens data xs tys then
-            let mut σ' ← `($(σ) |> SubstVec.lift $lift)
+          if let some ⟨lifts, []⟩ ← mkLiftsAndRens data xs tys then
+            if useTCSyntax then `(($x)[($(σ).lift $lifts),]) else `($smap ($(σ).lift $lifts) $x)
+          else if let some ⟨lifts, rens⟩ ← mkLiftsAndRens data xs tys then
+            let mut σ' ← `($(σ) |> SubstVec.lift $lifts)
             for ren in rens do
               σ' ← `($σ' |> $ren)
             if useTCSyntax then `(($x)[$(σ'),]) else `($smap ($σ') $x)
@@ -468,7 +474,6 @@ namespace Automation
         let fLhs lhs : CommandElabM Term := match mapType with | .rmap => `(($lhs)⟨$(rσ),⟩) | .smap => `(($lhs)[$(rσ),])
         let eq ← mkCtorEq fLhs fRhs ctor (fVar := match mapType with | .rmap => none | .smap => some $ smap_fVar sfx)
         let args ← mkCtorArgs ctor
-        dbg_trace s!"\n MAKING THEOREM {thmName},\n suffix is {sfx}, \n equation is {eq}\n"
         elabCommand $ ← `(
           @[simp]
           theorem $thmName {$args.toArray*} {$rσ : $TheVec [$sfx.toArray,*]} : $eq :=

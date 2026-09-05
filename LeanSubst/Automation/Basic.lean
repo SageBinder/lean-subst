@@ -347,7 +347,7 @@ namespace Automation
         pure none
 
     -- smap setup
-    let getIncrementsOfTy (lifts : List Term) (tysNamesGlobal : List Name) (ty : Name) : CommandElabM $ List (Ident × Term) := do
+    let _getIncrementsOfTy (lifts : List Term) (tysNamesGlobal : List Name) (ty : Name) : CommandElabM $ List (Ident × Term) := do
       let tysLiftsZip := tysNamesGlobal.zip lifts
       let increments : List (Ident × Term) ←
         tysLiftsZip.mapM
@@ -363,7 +363,7 @@ namespace Automation
     let mkLiftsAndRens (data : ArgData) (xs : List Ident) (tys' : List Ident) : CommandElabM $ Option $ Term × List Term :=
       match data with
       | .binder _ => do
-        let ⟨tys, headOnly⟩ : (List Ident) × Bool ←
+        let ⟨tys, _headOnly⟩ : (List Ident) × Bool ←
           if tys'.length = 1 ∧ tys.length > 1 then do
             let ty'0_eq_ty0 ← liftCoreM $ runMetaMAsCoreM $ isDefEq (← liftTermElabM $ Term.elabTerm (tys'.head!) none) (← liftTermElabM $ Term.elabTerm (tys.head!) none)
             if ty'0_eq_ty0 then -- The head-only case (for instance, tys' = [Term] and tys = [Term, Ty])
@@ -593,6 +593,38 @@ namespace Automation
     mkMapThms .smap
     mkFromActionMapThms .smap
 
+    if tys.length > 1 then
+      forEachSuffix tys.tail (fun tys => do
+        elabCommand $ ← `(
+          instance : SubstMapVecDef $ty $ty [$tys.toArray,*] where
+            apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
+
+          instance : SubstMapId $ty [$tys.toArray,*] where
+            apply_id := by subst_solve_id
+
+          instance : SuffixCommuteRenRen $ty [$tys.toArray,*] where
+            ren_ren := by subst_solve_compose
+
+          instance : SuffixCommuteRenSub $ty [$tys.toArray,*] where
+            ren_sub := by subst_solve_compose
+
+          instance : SuffixCommuteSubRen $ty [$tys.toArray,*] where
+            sub_ren := by subst_solve_compose
+
+          instance : SubstMapStable $ty [$tys.toArray,*] where
+            apply_stable := by subst_solve_stable
+
+          instance : SubstMapRenComposeLeft $ty [$tys.toArray,*] where
+            apply_ren_compose_left := by subst_solve_compose
+
+          instance : SubstMapRenComposeRight $ty [$tys.toArray,*] where
+            apply_ren_compose_right := by subst_solve_compose
+
+          instance : SubstMapCompose $ty [$tys.toArray,*] where
+            apply_compose := by subst_solve_compose
+        )
+      )
+
     elabCommand $ ← `(
       instance : SubstMapEmpty $ty where
         apply_empty := by intro $s:ident; simp [SubstMap.smap]
@@ -604,73 +636,43 @@ namespace Automation
         apply_id := by subst_solve_id
 
       instance : SubstMapStable $ty [$ty] where
-        apply_stable := by sorry --subst_solve_stable
+        apply_stable := by subst_solve_stable
 
       instance : SubstMapRenComposeLeft $ty [$ty] where
-        apply_ren_compose_left := by sorry -- subst_solve_compose
+        apply_ren_compose_left := by subst_solve_compose
 
       instance : SubstMapRenComposeRight $ty [$ty] where
-        apply_ren_compose_right := by sorry -- subst_solve_compose
+        apply_ren_compose_right := by subst_solve_compose
 
       instance : SubstMapCompose $ty [$ty] where
-        apply_compose := by sorry -- subst_solve_compose
+        apply_compose := by subst_solve_compose
     )
 
     if tys.length > 1 then
-      forEachSuffix tys.tail (fun tys => do
-        elabCommand $ ← `(
-          instance : SubstMapVecDef $ty $ty [$tys.toArray,*] where
-            apply_vecdef := by intro $s:ident $r:ident; induction $s:ident generalizing $r:ident <;> simp [*]
-
-          instance : SubstMapId $ty [$tys.toArray,*] where
-            apply_id := by subst_solve_id
-
-          instance : SuffixCommuteRenRen $ty [$tys.toArray,*] where
-            ren_ren := by sorry --subst_solve_compose
-
-          instance : SuffixCommuteRenSub $ty [$tys.toArray,*] where
-            ren_sub := by sorry --subst_solve_compose
-
-          instance : SuffixCommuteSubRen $ty [$tys.toArray,*] where
-            sub_ren := by sorry --subst_solve_compose
-
-          instance : SubstMapStable $ty [$tys.toArray,*] where
-            apply_stable := by sorry --subst_solve_stable
-
-          instance : SubstMapRenComposeLeft $ty [$tys.toArray,*] where
-            apply_ren_compose_left := by sorry --subst_solve_compose
-
-          instance : SubstMapRenComposeRight $ty [$tys.toArray,*] where
-            apply_ren_compose_right := by sorry --subst_solve_compose
-
-          instance : SubstMapCompose $ty [$tys.toArray,*] where
-            apply_compose := by sorry --subst_solve_compose
-        )
-      )
       elabCommand $ ← `(
         instance : SubstMapId $ty [$tys.toArray,*] where
           apply_id := by subst_solve_id
 
         instance : SubstMapStable $ty [$tys.toArray,*] where
-          apply_stable := by sorry --subst_solve_stable
+          apply_stable := by subst_solve_stable
 
         instance : SubstMapRenComposeLeft $ty [$tys.toArray,*] where
-          apply_ren_compose_left := by sorry --subst_solve_compose
+          apply_ren_compose_left := by subst_solve_compose
 
         instance : SubstMapRenComposeRight $ty [$tys.toArray,*] where
-          apply_ren_compose_right := by sorry --subst_solve_compose
+          apply_ren_compose_right := by subst_solve_compose
 
         instance : SubstMapCompose $ty [$tys.toArray,*] where
-          apply_compose := by sorry --subst_solve_compose
+          apply_compose := by subst_solve_compose
       )
 
-  def genAllTys : List Ident → CommandElabM Unit
-  | [] => pure ()
-  | .cons ty tys => do
-    genAllTys tys
-    genTy (ty :: tys)
+  -- def genAllTys : List Ident → CommandElabM Unit
+  -- | [] => pure ()
+  -- | .cons ty tys => do
+  --   genAllTys tys
+  --   genTy (ty :: tys)
 
   elab "#leansubst" &"generate" tys:ident,* : command =>
-    genAllTys tys.getElems.toList.reverse
+    genTy tys.getElems.toList
 
 end Automation

@@ -23,15 +23,16 @@ inductive Term where
 | tlam (t : Term) : Term -- binds Ty in t (does it make sense to allow a user to give a name instead of a position?)
 | zero : Term
 | succ : Term -> Term
-| nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Term's in s
+| nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Terms in s
 
 
 #leansubst var Term.var
 #leansubst bind Term at pos 1 in Term.lam
 #leansubst bind Ty at pos 0 in Term.tlam
-#leansubst bind 2 of Term at pos 2 in Term.nrec
-
---set_option diagnostics true
+#leansubst bind
+  2 of Term at pos 2,
+  1 of Ty at pos 2
+  in Term.nrec
 
 -- #leansubst generate Ty, Term
 

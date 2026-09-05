@@ -376,20 +376,24 @@ namespace Automation
         let lifts ← tys.mapM $ getLiftsOfTy data xs
         let optionLifts := lifts.map (fun stx : Term ↦ if BEq.beq stx $ Syntax.mkNatLit 0 then none else some stx)
         -- Check if all lifts are syntactically just 0
-        if optionLifts.all (fun | .none => true | .some _ => false) then
+        if optionLifts.all Option.isNone then
           pure none
         else
           let tysNamesGlobal ← tys.mapM toGlobal
           let zipped := tysNamesGlobal.zip optionLifts
-          let rens : List $ Term ← mapEachSuffix zipped (fun zippedSfx ↦ do
+          let rens : List $ Option Term ← mapEachSuffix zipped (fun zippedSfx ↦ do
             let ⟨tys, optionLifts⟩ := zippedSfx.unzip
-            let lifts ← zippedSfx.tail.mapM (fun | ⟨ty, .none⟩ => `(Ren.id $(mkIdent ty)) | ⟨ty, .some n⟩ => `(Ren.add $(mkIdent ty) $n))
-            let tysHd := mkIdent tys.head!
-            let tysTail := (tys.tail!.map mkIdent).toArray
-            let i := Syntax.mkNatLit $ numTotalTys - tys.length -- shadowing is bad, kids
-            `(.ren $tysHd [$tysTail,*] ⟨$lifts.toArray,*, .nil⟩ $i rfl)
+            if optionLifts.tail.all Option.isNone then
+              pure none
+            else
+              let lifts ← zippedSfx.tail.mapM (fun | ⟨ty, .none⟩ => `(Ren.id $(mkIdent ty)) | ⟨ty, .some n⟩ => `(Ren.add $(mkIdent ty) $n))
+              let tysHd := mkIdent tys.head!
+              let tysTail := (tys.tail!.map mkIdent).toArray
+              let i := Syntax.mkNatLit $ numTotalTys - tys.length -- shadowing is bad, kids
+              pure $ some $ ← `(.ren $tysHd [$tysTail,*] ⟨$lifts.toArray,*, .nil⟩ $i rfl)
           )
           let rens := rens.reverse.tail.reverse -- dropLast
+          let rens ← (rens.filter (Option.isSome)).mapM (fun | .none => `(0) | .some t => pure t)
           let liftsTm ← `([$lifts.toArray,*])
           pure $ some ⟨liftsTm, rens⟩
       | _ => pure none

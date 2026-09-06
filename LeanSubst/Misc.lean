@@ -419,6 +419,12 @@ macro "subst_solve_stable" : tactic => `(tactic| {
     try solve | subst h; simp [*] at *; try congr
     try solve | simp [*] at *
     try solve | subst h; simp [*]; rw [Subst.apply_stable]; congr
+    try solve | {
+      subst h; simp [*] at *
+      rcases r with ⟨r1, r2, r3, r4, r5, r6, r7, r8, r9⟩
+      try simp [RenVec.to]
+      try rw [Subst.apply_stable]; congr
+    }
 })
 
 macro "subst_solve_compose" : tactic => `(tactic| {

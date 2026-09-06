@@ -1058,6 +1058,15 @@ theorem Ren.to_compose [RenMap T [T]] [SubstMap T [T]] {r1 r2 : Ren T}
 := by
   simp [to, HAndThen.hAndThen, AndThen.andThen, compose, Subst.compose, Subst.act, SubstAction.act]
 
+@[simp]
+theorem Ren.to_rmap [RenMap S V] [RenSuffix S V]
+  {r : Ren S} {k : RenVec V}
+  : r.to⟨k,⟩ = r.to
+:= by
+  simp [RenMap.rmap, Subst.rmap1]
+  cases r; case _ f =>
+  simp [Ren.to]
+
 def RenVec.to : {V : List (Type u2)} -> (r : RenVec V) -> SubstVec V
 | [], _ => .nil
 | .cons _ _, (r, rs) => (r.to, rs.to)

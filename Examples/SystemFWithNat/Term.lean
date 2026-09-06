@@ -25,7 +25,6 @@ inductive Term where
 | succ : Term -> Term
 | nrec (motive : Ty) (z : Term) (s : Term) (n : Term) : Term -- binds 2 Terms in s
 
-
 #leansubst var Term.var
 #leansubst bind Term at pos 1 in Term.lam
 #leansubst bind Ty at pos 0 in Term.tlam
@@ -34,7 +33,7 @@ inductive Term where
   1 of Ty at pos 2
   in Term.nrec
 
--- #leansubst generate Ty, Term
+#leansubst generate Ty, Term
 
 -- -- Checking Ty --
 -- #print Ty.from_action

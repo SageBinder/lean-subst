@@ -12,7 +12,7 @@ namespace Automation
   def getConstructors (typeName : Name) : MetaM (List Name) := do
     match (← getEnv).find? typeName with
     | some (.inductInfo val) => return val.ctors
-    | _ => throwError "Could not get constructors of: {typeName}"
+    | _ => throwError "LeanSubst error: Could not get constructors of: {typeName} (are you sure it is an inductive type?)"
 
   def isVar (ctor : Name) : MetaM Bool := do
     pure $ leanSubstVar.hasTag (← getEnv) ctor
@@ -23,7 +23,7 @@ namespace Automation
   def getNonVarConstructors (typeName : Name) : MetaM (List Name) := do
     match (← getEnv).find? typeName with
     | some (.inductInfo val) => val.ctors.filterM isNotVar
-    | _ => throwError "Could not get constructors of: {typeName}"
+    | _ => throwError "LeanSubst error: Could not get constructors of: {typeName} (are you sure it is an inductive type?)"
 
   def getVarCtor (type : Name) : MetaM (Option Name) := do
     List.findM? (isVar) (← getConstructors type)
@@ -162,7 +162,7 @@ namespace Automation
       if let some varCtor ← liftCoreM $ runMetaMAsCoreM $ getVarCtor ty then
         let varCase ← mkVarCtorCase fVar varCtor
         pure $ Array.append #[varCase] nonVarCases
-      else throwError "ruh roh"
+      else throwError s!"LeanSubst error: No constructor marked as a variable for type {ty}."
     else
       let ctors ← liftCoreM $ runMetaMAsCoreM $ getConstructors ty
       ctors.toArray.mapM (mkCtorCase f)
@@ -219,19 +219,14 @@ namespace Automation
     let toGlobal (ty : Ident) : CommandElabM Name := Command.liftCoreM $ realizeGlobalConstNoOverload ty.raw
     let ty := tys[0]!
     let tyName := ty.raw.getId
-    -- let tyStr := tyName.toString
     let tyNameGlobal ← toGlobal ty
-
-    -- let tyArr ← `([$tys.toArray,*])
-    -- let tysNamesGlobal ← tys.mapM toGlobal
 
     let qualify str := mkIdent $ .str tyName str
 
     let varCtorName ← liftCoreM $ runMetaMAsCoreM $ getVarCtor tyNameGlobal
     let varName ← match varCtorName with
     | some name => pure name
-    | none => throwError "ruh roh"
-    -- let varType := (← getConstInfo varName).type
+    | none => throwError s!"LeanSubst error: No constructor marked as a variable for type {ty}."
     let var := mkIdent varName
 
     let from_action := qualify "from_action"
@@ -413,7 +408,8 @@ namespace Automation
           `($(r).1.act $x) -- NOTE: assumes that the type being generated is the first type in [tys]
         else
           `($x)
-      | .smap => throwError "smap var case"
+      | .smap =>
+        throwError s!"LeanSubst error: encountered MapType.smap when mapping the var case for type {ty}, but this should not happen in the MapType.smap case (it has to build its own var RHS rather than just mapping the arguments)."
     | _ => do
       let tyExpr ← liftTermElabM $ Term.elabTerm ty none
       if ← liftCoreM $ runMetaMAsCoreM $ isDefEq tyExpr ty' then
